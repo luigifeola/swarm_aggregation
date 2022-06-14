@@ -18,7 +18,7 @@ class AgentAPI:
 
 
 class Agent:
-    colors = {State.EXPLORING: "black", State.INTENSE_LIGHT: "white", State.DARK_LIGHT: "red"}
+    colors = {State.EXPLORING: "black", State.INTENSE_LIGHT: "red", State.DARK_LIGHT: "white"}
 
     def __init__(self, robot_id, x, y, speed, radius,
                  bool_noise, noise_mu, noise_musd, noise_sd,
@@ -52,7 +52,9 @@ class Agent:
         return f"ID: {self.id}\n" \
                f"drift: {round(self.noise_mu, 5)}\n" \
                f"position: {np.round(self.pos, 2)}\n" \
-               f"direction: {np.round(self.behavior.get_dr(), 2)}"
+               f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
+               f"alpha: {np.round(self.behavior.get_rw_factors()[1], 2)}\n" \
+               f"gradient [0 - 255]: {int(self.environment.sense_gradient(self))}"
 
     def __repr__(self):
         return f"bot {self.id}"
@@ -112,7 +114,7 @@ class Agent:
         self.update_levy_counter()
         return angle
 
-    def draw(self, canvas):
+    def draw(self, canvas, draw_debug):
         circle = canvas.create_oval(self.pos[0] - self._radius,
                                     self.pos[1] - self._radius,
                                     self.pos[0] + self._radius,
@@ -120,9 +122,11 @@ class Agent:
                                     fill=self.behavior.color,
                                     outline=self.colors[self.behavior.state],
                                     width=4)
-        self.draw_comm_radius(canvas)
+
         self.draw_orientation(canvas)
-        self.draw_trace(canvas)
+        if draw_debug:
+            self.draw_trace(canvas)
+            self.draw_comm_radius(canvas)
 
     def draw_trace(self, canvas):
         tail = canvas.create_line(*self.trace, fill="green", width=5)

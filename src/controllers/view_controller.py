@@ -11,7 +11,8 @@ class ViewController:
         self.fps_update_counter = 0
 
         self.root = tk.Tk()
-        self.root.title("Random Walk Simulator")
+        self.controller.environment.load_images()
+        self.root.title("Gradient Sensing")
 
         self.canvas = tk.Canvas(self.root, width=width, height=height, highlightthickness=0)
         self.canvas.configure(bg="white")
@@ -25,6 +26,11 @@ class ViewController:
                                                     font="Arial 13 bold", anchor="nw")
         self.debug_text = self.debug_canvas.create_text(5, 25, fill="gray30", text=f"No robot selected",
                                                         anchor="nw", font="Arial 10")
+        self.debug_text_1 = self.debug_canvas.create_text(5, 200, fill="gray30",
+                                                          text=f"White and red state show only\n"
+                                                               f"in which half of the field the\n"
+                                                               f"robot is moving",
+                                                          anchor="nw", font="Arial 10")
 
         self.animation_ended = False
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -80,6 +86,7 @@ class ViewController:
         self.root.bind("<space>", self.switch_animating_state)
         self.root.bind("<Button-1>", self.select_robot)
         self.root.bind("<n>", lambda event: self.controller.step())
+        self.root.bind("<t>", lambda event: self.controller.environment.switch_draw_trace())
 
     def on_closing(self):
         self.animation_ended = True
@@ -98,3 +105,4 @@ class ViewController:
         else:
             self.debug_text = self.debug_canvas.create_text(5, 25, fill="gray45", text=f"No robot selected",
                                                             anchor="nw", font="Arial 10")
+

@@ -17,7 +17,7 @@ def rgb(r, g, b):
 class Environment:
 
     def __init__(self, width=500, height=500,
-                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
+                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25, draw_debug=True,
                  crw_factor=0.9, levy_factor=1.2,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
         self.population = list()
@@ -27,6 +27,7 @@ class Environment:
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
         self.robot_communication_radius = communication_radius
+        self.draw_debug = draw_debug
         self.crw_factor = crw_factor
         self.levy_factor = levy_factor
         self.bool_noise = bool_noise
@@ -34,6 +35,10 @@ class Environment:
         self.noise_musd = noise_musd
         self.noise_sd = noise_sd
         self.create_robots()
+        self.img = None
+
+    def load_images(self):
+        self.img = ImageTk.PhotoImage(file="../assets/field.png")
 
 
     def step(self):
@@ -102,8 +107,9 @@ class Environment:
 
     def draw(self, canvas):
         self.draw_gradient_background(canvas)
+        # self.draw_background(canvas)
         for robot in self.population:
-            robot.draw(canvas)
+            robot.draw(canvas, self.draw_debug)
 
     def get_robot_at(self, x, y):
         selected = None
@@ -112,6 +118,9 @@ class Environment:
                 selected = bot
                 break
         return selected
+
+    def switch_draw_trace(self):
+        self.draw_debug = not self.draw_debug
 
     def draw_gradient_background(self, canvas):
         # Iterate through the color and fill the rectangle with colors(r,g,0)
@@ -124,12 +133,16 @@ class Environment:
         #     canvas.create_rectangle(x * 2, 0, self.width, self.height, fill=rgb(r, g, b), outline=rgb(r, g, b))
         #     # canvas.create_rectangle(x * 2, 0, self.width, self.height, fill=rgb(0, g, 0), outline=rgb(0, g, 0))
         for x in range(0, self.width+1):
-            r = (255 - x)
+            r = 255 - (x * 255) // self.width
             g = 255 - (x * 255) // self.width
             # g = 255 if x < 128 else 255 - (x - 128) * 2
-            b = (255 - x)
+            b = 255 - (x * 255) // self.width
             # print(x, g)
-            canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(0, g, 0), outline=rgb(0, g, 0))
+            # canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(0, g, 0), outline=rgb(0, g, 0))
+            canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(r, g, b), outline=rgb(r, g, b))
+
+    def draw_background(self, canvas):
+        canvas.create_image(0, 0, image=self.img, anchor='nw')
 
 
 

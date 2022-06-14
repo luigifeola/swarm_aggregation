@@ -47,13 +47,12 @@ class DiffusiveBehavior(Behavior):
         if sensor["GRADIENT"] <= 127:
             # print('Brownian')
             self.state = State.DARK_LIGHT
-            self.crw_factor = 0.0
-            self.levy_factor = 2.0
         else:
             # print('Levy')
             self.state = State.INTENSE_LIGHT
-            self.crw_factor = 0.9
-            self.levy_factor = 1.2
+
+        self.crw_factor = 0.99 * (sensor["GRADIENT"] / 255)
+        self.levy_factor = -0.8 * (sensor["GRADIENT"]/255) + 2
 
     def get_rw_factors(self):
         return self.crw_factor, self.levy_factor
