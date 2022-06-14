@@ -34,19 +34,36 @@ class DiffusiveBehavior(Behavior):
         super().__init__()
         self.state = State.EXPLORING
 
+        self.crw_factor = 0.0
+        self.levy_factor = 2.0
+
     def step(self, sensors, api):
         self.dr[0], self.dr[1] = 0, 0
-        self.update_movement_based_on_state(api)
-        self.check_movement_with_sensors(sensors)
+        self.update_behavior(sensors, api)
 
-    def update_behaviour(self):
+
+    def update_behavior(self, sensor, api):
         self.state = State.EXPLORING
+        if sensor["GRADIENT"] <= 127:
+            # print('Brownian')
+            self.state = State.DARK_LIGHT
+            self.crw_factor = 0.0
+            self.levy_factor = 2.0
+        else:
+            # print('Levy')
+            self.state = State.INTENSE_LIGHT
+            self.crw_factor = 0.9
+            self.levy_factor = 1.2
 
-    def update_movement_based_on_state(self, api):
+    def get_rw_factors(self):
+        return self.crw_factor, self.levy_factor
+
+    def update_movement_based_on_state(self, sensors, api):
         turn_angle = api.get_levy_turn_angle()
         self.dr = api.speed() * np.array([cos(radians(turn_angle)), sin(radians(turn_angle))])
+        self.wall_avoidance(sensors)
 
-    def check_movement_with_sensors(self, sensors):
+    def wall_avoidance(self, sensors):
         if (sensors["FRONT"] and self.dr[0] >= 0) or (sensors["BACK"] and self.dr[0] <= 0):
             self.dr[0] = -self.dr[0]
         if (sensors["RIGHT"] and self.dr[1] <= 0) or (sensors["LEFT"] and self.dr[1] >= 0):

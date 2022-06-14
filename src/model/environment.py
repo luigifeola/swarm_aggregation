@@ -69,7 +69,8 @@ class Environment:
     def get_sensors(self, robot):
         orientation = robot.orientation
         speed = robot.speed()
-        sensors = {"FRONT": any(self.check_border_collision(robot, robot.pos[0] + speed * cos(radians(orientation)),
+        sensors = {"GRADIENT": self.sense_gradient(robot),
+                   "FRONT": any(self.check_border_collision(robot, robot.pos[0] + speed * cos(radians(orientation)),
                                                             robot.pos[1] + speed * sin(radians(orientation)))),
                    "RIGHT": any(
                        self.check_border_collision(robot, robot.pos[0] + speed * cos(radians((orientation - 90) % 360)),
@@ -82,7 +83,11 @@ class Environment:
                        self.check_border_collision(robot, robot.pos[0] + speed * cos(radians((orientation + 90) % 360)),
                                                    robot.pos[1] + speed * sin(radians((orientation + 90) % 360)))),
                    }
+        # print(sensors)
         return sensors
+
+    def sense_gradient(self, robot):
+        return 255 - (255 * robot.pos[0]) // self.width
 
     def check_border_collision(self, robot, new_x, new_y):
         collide_x = False
@@ -110,10 +115,21 @@ class Environment:
 
     def draw_gradient_background(self, canvas):
         # Iterate through the color and fill the rectangle with colors(r,g,0)
-        for x in range(0, 256):
-            r = x * 2 if x < 128 else 255
-            g = 255 if x < 128 else 255 - (x - 128) * 2
-            canvas.create_rectangle(x * 2, 0, self.width, self.height, fill=rgb(r, g, 0), outline=rgb(r, g, 0))
+        # for x in range(0, 256):
+        #     r = (255 - x)
+        #     g = (255 - x)
+        #     # g = 255 if x < 128 else 255 - (x - 128) * 2
+        #     b = (255 - x)
+        #     print(x, g)
+        #     canvas.create_rectangle(x * 2, 0, self.width, self.height, fill=rgb(r, g, b), outline=rgb(r, g, b))
+        #     # canvas.create_rectangle(x * 2, 0, self.width, self.height, fill=rgb(0, g, 0), outline=rgb(0, g, 0))
+        for x in range(0, self.width+1):
+            r = (255 - x)
+            g = 255 - (x * 255) // self.width
+            # g = 255 if x < 128 else 255 - (x - 128) * 2
+            b = (255 - x)
+            # print(x, g)
+            canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(0, g, 0), outline=rgb(0, g, 0))
 
 
 

@@ -18,7 +18,7 @@ class AgentAPI:
 
 
 class Agent:
-    colors = {State.EXPLORING: "black", State.INTENSE_LIGHT: "green", State.DARK_LIGHT: "orange"}
+    colors = {State.EXPLORING: "black", State.INTENSE_LIGHT: "white", State.DARK_LIGHT: "red"}
 
     def __init__(self, robot_id, x, y, speed, radius,
                  bool_noise, noise_mu, noise_musd, noise_sd,
@@ -38,6 +38,10 @@ class Agent:
 
         self.environment = environment
 
+        self.levy_weights = rw.get_levy_weights()
+        self.crw_weights = rw.get_crw_weights()
+        self.max_levy_steps = 1000
+
         self.levy_counter = 1
         self.trace = deque(self.pos, maxlen=100)
 
@@ -55,8 +59,12 @@ class Agent:
 
     def step(self):
         sensors = self.environment.get_sensors(self)
-        # self.check_food(sensors)
         self.behavior.step(sensors, AgentAPI(self))
+
+        [crw_factor, levy_factor] = self.behavior.get_rw_factors()
+
+        self.update_rw_parameters(crw_factor, levy_factor)
+        self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
         self.update_trace()
 
@@ -88,13 +96,19 @@ class Agent:
 
     def update_levy_counter(self):
         self.levy_counter -= 1
+
         if self.levy_counter <= 0:
-            self.levy_counter = choices(range(1, rw.get_max_levy_steps() + 1), rw.get_levy_weights())[0]
+            self.levy_counter = choices(range(1, self.max_levy_steps + 1), self.levy_weights)[0]
+
+    def update_rw_parameters(self, crw_factor, levy_factor, max_levy_steps=1000):
+        thetas = np.arange(0, 360)
+        self.crw_weights = rw.crw_pdf(thetas, crw_factor)
+        self.levy_weights = rw.levy_pdf(max_levy_steps, levy_factor)
 
     def get_levy_turn_angle(self):
         angle = 0
         if self.levy_counter <= 1:
-            angle = choices(np.arange(0, 360), rw.get_crw_weights())[0]
+            angle = choices(np.arange(0, 360), self.crw_weights)[0]
         self.update_levy_counter()
         return angle
 
@@ -105,13 +119,13 @@ class Agent:
                                     self.pos[1] + self._radius,
                                     fill=self.behavior.color,
                                     outline=self.colors[self.behavior.state],
-                                    width=3)
+                                    width=4)
         self.draw_comm_radius(canvas)
         self.draw_orientation(canvas)
         self.draw_trace(canvas)
 
     def draw_trace(self, canvas):
-        tail = canvas.create_line(*self.trace)
+        tail = canvas.create_line(*self.trace, fill="green", width=5)
 
     def draw_comm_radius(self, canvas):
         circle = canvas.create_oval(self.pos[0] - self.environment.robot_communication_radius,
