@@ -5,7 +5,7 @@ from random import randint, random
 import numpy as np
 
 from model.agent import Agent
-from model.behavior import DiffusiveBehavior
+from model.behavior import DiffusiveBehavior, SocialBehavior
 
 
 # Define a function for filling the rectangle with random colors
@@ -35,6 +35,7 @@ class Environment:
         self.noise_musd = noise_musd
         self.noise_sd = noise_sd
         self.create_robots()
+        self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
 
     def load_images(self):
@@ -44,14 +45,14 @@ class Environment:
     def step(self):
         # compute neighbors
         pop_size = len(self.population)
-        # pop_copy = copy.deepcopy(self.population)
-        neighbors_table = [[] for i in range(pop_size)]
+        self.neighbors_table = [[] for i in range(pop_size)]
         for id1 in range(pop_size):
             for id2 in range(id1 + 1, pop_size):
                 if distance_between(self.population[id1], self.population[id2]) < self.robot_communication_radius:
-                    neighbors_table[id1].append(self.population[id2])
-                    neighbors_table[id2].append(self.population[id1])
+                    self.neighbors_table[id1].append(self.population[id2])
+                    self.neighbors_table[id2].append(self.population[id1])
 
+        print(self.neighbors_table)
         # 2. Move
         for robot in self.population:
             robot.step()
@@ -67,7 +68,7 @@ class Environment:
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
-                          behavior=DiffusiveBehavior(),
+                          behavior=SocialBehavior(),
                           environment=self)
             self.population.append(robot)
 
@@ -87,6 +88,7 @@ class Environment:
                    "LEFT": any(
                        self.check_border_collision(robot, robot.pos[0] + speed * cos(radians((orientation + 90) % 360)),
                                                    robot.pos[1] + speed * sin(radians((orientation + 90) % 360)))),
+                   "NEIGHBORS": self.sense_neighbors(robot),
                    }
         # print(sensors)
         return sensors
@@ -104,6 +106,9 @@ class Environment:
             collide_y = True
 
         return collide_x, collide_y
+
+    def sense_neighbors(self, robot):
+        return self.neighbors_table[robot.id]
 
     def draw(self, canvas):
         self.draw_gradient_background(canvas)
@@ -143,9 +148,3 @@ class Environment:
 
     def draw_background(self, canvas):
         canvas.create_image(0, 0, image=self.img, anchor='nw')
-
-
-
-
-
-

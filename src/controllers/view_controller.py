@@ -11,7 +11,7 @@ class ViewController:
         self.fps_update_counter = 0
 
         self.root = tk.Tk()
-        self.controller.environment.load_images()
+        # self.controller.environment.load_images()
         self.root.title("Gradient Sensing")
 
         self.canvas = tk.Canvas(self.root, width=width, height=height, highlightthickness=0)
@@ -105,4 +105,3 @@ class ViewController:
         else:
             self.debug_text = self.debug_canvas.create_text(5, 25, fill="gray45", text=f"No robot selected",
                                                             anchor="nw", font="Arial 10")
-
