@@ -52,7 +52,7 @@ class Environment:
                     self.neighbors_table[id1].append(self.population[id2])
                     self.neighbors_table[id2].append(self.population[id1])
 
-        print(self.neighbors_table)
+        # print(self.neighbors_table)
         # 2. Move
         for robot in self.population:
             robot.step()
@@ -111,7 +111,7 @@ class Environment:
         return self.neighbors_table[robot.id]
 
     def draw(self, canvas):
-        self.draw_gradient_background(canvas)
+        # self.draw_gradient_background(canvas)
         # self.draw_background(canvas)
         for robot in self.population:
             robot.draw(canvas, self.draw_debug)

@@ -54,7 +54,7 @@ class Agent:
                f"position: {np.round(self.pos, 2)}\n" \
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
                f"alpha: {np.round(self.behavior.get_rw_factors()[1], 2)}\n" \
-               f"gradient [0 - 255]: {int(self.environment.sense_gradient(self))}"
+               f"neighbors: {self.environment.sense_neighbors(self)}"
 
     def __repr__(self):
         return f"bot {self.id}"
