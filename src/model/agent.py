@@ -15,6 +15,7 @@ class AgentAPI:
         self.radius = agent.radius
         self.get_levy_turn_angle = agent.get_levy_turn_angle
         self.get_mu = agent.noise_mu
+        self.get_tick = agent.get_tick
 
 
 class Agent:
@@ -48,6 +49,8 @@ class Agent:
         self.behavior = behavior
         self.api = AgentAPI(self)
 
+        self.tick = 0
+
     def __str__(self):
         return f"ID: {self.id}\n" \
                f"drift: {round(self.noise_mu, 5)}\n" \
@@ -69,6 +72,7 @@ class Agent:
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
         self.update_trace()
+        self.tick += 1
 
     def update_trace(self):
         self.trace.appendleft(self.pos[1])
@@ -113,6 +117,9 @@ class Agent:
             angle = choices(np.arange(0, 360), self.crw_weights)[0]
         self.update_levy_counter()
         return angle
+
+    def get_tick(self):
+        return self.tick
 
     def draw(self, canvas, draw_debug):
         circle = canvas.create_oval(self.pos[0] - self._radius,
