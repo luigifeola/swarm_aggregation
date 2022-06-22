@@ -14,6 +14,7 @@ class AgentAPI:
         self.speed = agent.speed
         self.radius = agent.radius
         self.get_levy_turn_angle = agent.get_levy_turn_angle
+        self.reset_levy_counter = agent.reset_levy_counter
         self.get_mu = agent.noise_mu
 
 
@@ -54,7 +55,8 @@ class Agent:
                f"position: {np.round(self.pos, 2)}\n" \
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
                f"alpha: {np.round(self.behavior.get_rw_factors()[1], 2)}\n" \
-               f"gradient [0 - 255]: {int(self.environment.sense_gradient(self))}"
+               f"lambda: {np.round(self.behavior.get_rw_factors()[2], 2)}\n" \
+               f"gradient [0 - 1]: {np.round(self.environment.sense_gradient(self), 2)}"
 
     def __repr__(self):
         return f"bot {self.id}"
@@ -63,9 +65,9 @@ class Agent:
         sensors = self.environment.get_sensors(self)
         self.behavior.step(sensors, AgentAPI(self))
 
-        [crw_factor, levy_factor] = self.behavior.get_rw_factors()
+        [crw_factor, levy_factor, max_levy_steps] = self.behavior.get_rw_factors()
 
-        self.update_rw_parameters(crw_factor, levy_factor)
+        self.update_rw_parameters(crw_factor, levy_factor, max_levy_steps)
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
         self.update_trace()
@@ -106,6 +108,7 @@ class Agent:
         thetas = np.arange(0, 360)
         self.crw_weights = rw.crw_pdf(thetas, crw_factor)
         self.levy_weights = rw.levy_pdf(max_levy_steps, levy_factor)
+        self.max_levy_steps = max_levy_steps
 
     def get_levy_turn_angle(self):
         angle = 0
@@ -113,6 +116,10 @@ class Agent:
             angle = choices(np.arange(0, 360), self.crw_weights)[0]
         self.update_levy_counter()
         return angle
+
+    def reset_levy_counter(self):
+        self.levy_counter = 1
+        # self.get_levy_turn_angle()
 
     def draw(self, canvas, draw_debug):
         circle = canvas.create_oval(self.pos[0] - self._radius,

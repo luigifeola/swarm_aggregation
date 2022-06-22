@@ -26,3 +26,19 @@ def rotate(vector, angle):
 def distance_between(robot1, robot2):
     return norm(robot2.pos - robot1.pos)
 
+
+def matrix_index_distances(mat, index):
+    i, j = np.indices(mat.shape, sparse=True)
+    return np.sqrt((i - index[0]) ** 2 + (j - index[1]) ** 2)
+
+
+# Define a function for filling the rectangle with random colors
+def rgb(r, g, b):
+    return "#%s%s%s" % tuple([hex(c)[2:].rjust(2, "0")
+                              for c in (r, g, b)])
+
+
+def get_pixel_col(img, pixel):
+    return img.getpixel((pixel[0], pixel[1])) / 255
+
+

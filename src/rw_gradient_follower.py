@@ -3,10 +3,12 @@ from controllers.view_controller import ViewController
 from multiprocessing import Process, cpu_count
 from sys import argv
 import os
+import random
 
 
 def main():
-    config = Configuration(config_file=argv[1])
+    random.seed(argv[1])
+    config = Configuration(config_file=argv[2])
     if config.parameters["VISUALIZE"] != 0:
         main_controller = MainController(config)
         _ = ViewController(main_controller,
@@ -14,7 +16,7 @@ def main():
                            config.parameters["HEIGHT"],
                            config.parameters["FPS"])
     else:
-        for arg in argv[1:]:
+        for arg in argv[2:]:
             config = Configuration(config_file=arg)
             run_processes(config)
 
@@ -41,8 +43,14 @@ def run_processes(config: Configuration):
 
 
 def run(config):
+    # random.seed(argv[1])
     controller = MainController(config)
     controller.start_simulation()
+    filename = f"overall_gradient.txt"
+    filepath = f"../data"
+    os.makedirs(filepath, exist_ok=True)
+    with open(f"{filepath}/{filename}", "a") as file:
+        file.write(str(controller.get_overall_gradient())+'\n')
 
 
 if __name__ == '__main__':

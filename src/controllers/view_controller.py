@@ -11,7 +11,8 @@ class ViewController:
         self.fps_update_counter = 0
 
         self.root = tk.Tk()
-        self.controller.environment.load_images()
+        # TODO: load the environment also without the view_controller
+        # self.controller.environment.load_images()
         self.root.title("Gradient Sensing")
 
         self.canvas = tk.Canvas(self.root, width=width, height=height, highlightthickness=0)
@@ -29,7 +30,9 @@ class ViewController:
         self.debug_text_1 = self.debug_canvas.create_text(5, 200, fill="gray30",
                                                           text=f"White and red state show only\n"
                                                                f"in which half of the field the\n"
-                                                               f"robot is moving",
+                                                               f"robot is moving\n"
+                                                               f"(maybe different colours\n"
+                                                               f"can represent quantization)",
                                                           anchor="nw", font="Arial 10")
 
         self.animation_ended = False
@@ -48,6 +51,10 @@ class ViewController:
             if self.can_render:
                 self.last_frame_time = time.time()
                 self.fps_update_counter += 1
+
+                if self.controller.tick == 1:
+                    self.paused = True
+
                 # Update environment
                 if not self.paused:
                     self.controller.step()
@@ -93,6 +100,7 @@ class ViewController:
 
     def switch_animating_state(self, event):
         self.paused = not self.paused
+        self.controller.step()
 
     def select_robot(self, event):
         self.selected_robot = self.controller.get_robot_at(event.x, event.y)

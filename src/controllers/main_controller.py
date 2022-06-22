@@ -49,12 +49,19 @@ class MainController:
         if self.tick < self.config.parameters["SIMULATION_STEPS"]:
             self.tick += 1
             self.environment.step()
+            print(f"Overall gradient for {self.config.parameters['NB_ROBOTS']} robots: "
+                  f"{self.get_overall_gradient()}")
 
     def start_simulation(self):
         # now = time.time()
         for step_nb in range(self.config.parameters["SIMULATION_STEPS"]):
             self.step()
-        # print(f"Time taken for {self.config.parameters['SIMULATION_STEPS']} steps: {time.time()-now}")
+        print(f"Overall gradient for {self.config.parameters['NB_ROBOTS']} robots: "
+              f"{self.get_overall_gradient()}")
+        # print(f"Time taken for {self.config.p-arameters['SIMULATION_STEPS']} steps: {time.time()-now}")
 
     def get_robot_at(self, x, y):
         return self.environment.get_robot_at(x, y)
+
+    def get_overall_gradient(self):
+        return self.environment.sensed_gradient

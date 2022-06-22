@@ -1,6 +1,6 @@
 from math import cos, sin, radians
-from PIL import ImageTk
-from helpers.utils import norm, distance_between
+from PIL import ImageTk, Image
+from helpers.utils import norm, distance_between, matrix_index_distances, rgb, get_pixel_col
 from random import randint, random
 import numpy as np
 
@@ -8,10 +8,6 @@ from model.agent import Agent
 from model.behavior import DiffusiveBehavior
 
 
-# Define a function for filling the rectangle with random colors
-def rgb(r, g, b):
-   return "#%s%s%s" % tuple([hex(c)[2:].rjust(2, "0")
-      for c in (r, g, b)])
 
 
 class Environment:
@@ -34,12 +30,13 @@ class Environment:
         self.noise_mu = noise_mu
         self.noise_musd = noise_musd
         self.noise_sd = noise_sd
-        self.create_robots()
         self.img = None
+        self.background = self.create_environment()
+        self.create_robots()
+        self.sensed_gradient = 0
 
     def load_images(self):
         self.img = ImageTk.PhotoImage(file="../assets/field.png")
-
 
     def step(self):
         # compute neighbors
@@ -71,6 +68,29 @@ class Environment:
                           environment=self)
             self.population.append(robot)
 
+    def create_environment(self):
+        background = Image.new('L', (self.width, self.height))
+        outerColor = 255
+        innerColor = 0
+        center_gradient = np.array([randint(0, self.width), randint(0, self.height)])
+        # Make it on a scale from 0 to 1
+        max_gradient_width = max(self.width - center_gradient[0], center_gradient[0])
+        max_gradient_height = max(self.height - center_gradient[1], center_gradient[1])
+        max_distance = max(max_gradient_width, max_gradient_height)
+        distances = matrix_index_distances(np.zeros((self.width, self.height)), index=center_gradient)
+        distances = distances / max_distance
+        for y in range(0, self.height, 2):
+            for x in range(0, self.width, 2):
+                # Find the distance to the center
+                distanceToCenter = distances[x, y]
+                gray = int(outerColor * distanceToCenter + innerColor * (1 - distanceToCenter))
+                background.putpixel((x, y), gray)
+                background.putpixel((x + 1, y), gray)
+                background.putpixel((x, y + 1), gray)
+                background.putpixel((x + 1, y + 1), gray)
+
+        return background
+
     def get_sensors(self, robot):
         orientation = robot.orientation
         speed = robot.speed()
@@ -92,7 +112,10 @@ class Environment:
         return sensors
 
     def sense_gradient(self, robot):
-        return 255 - (255 * robot.pos[0]) // self.width
+        # return 255 - (255 * robot.pos[0]) // self.width
+        gradient_t = get_pixel_col(self.background, robot.pos)
+        self.sensed_gradient += gradient_t
+        return gradient_t
 
     def check_border_collision(self, robot, new_x, new_y):
         collide_x = False
@@ -106,8 +129,8 @@ class Environment:
         return collide_x, collide_y
 
     def draw(self, canvas):
-        self.draw_gradient_background(canvas)
-        # self.draw_background(canvas)
+        # self.draw_gradient_background(canvas)
+        self.draw_background(canvas)
         for robot in self.population:
             robot.draw(canvas, self.draw_debug)
 
@@ -124,15 +147,7 @@ class Environment:
 
     def draw_gradient_background(self, canvas):
         # Iterate through the color and fill the rectangle with colors(r,g,0)
-        # for x in range(0, 256):
-        #     r = (255 - x)
-        #     g = (255 - x)
-        #     # g = 255 if x < 128 else 255 - (x - 128) * 2
-        #     b = (255 - x)
-        #     print(x, g)
-        #     canvas.create_rectangle(x * 2, 0, self.width, self.height, fill=rgb(r, g, b), outline=rgb(r, g, b))
-        #     # canvas.create_rectangle(x * 2, 0, self.width, self.height, fill=rgb(0, g, 0), outline=rgb(0, g, 0))
-        for x in range(0, self.width+1):
+        for x in range(0, self.width + 1):
             r = 255 - (x * 255) // self.width
             g = 255 - (x * 255) // self.width
             # g = 255 if x < 128 else 255 - (x - 128) * 2
@@ -142,10 +157,5 @@ class Environment:
             canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(r, g, b), outline=rgb(r, g, b))
 
     def draw_background(self, canvas):
+        self.img = ImageTk.PhotoImage(self.background)
         canvas.create_image(0, 0, image=self.img, anchor='nw')
-
-
-
-
-
-
