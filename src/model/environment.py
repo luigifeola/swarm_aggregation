@@ -6,15 +6,18 @@ import numpy as np
 
 from model.agent import Agent
 from model.behavior import DiffusiveBehavior
+from helpers import random_walk
 
-
+START_CRW_FACTOR = 0.9
+START_LEVY_FACTOR = 1.2
+START_MAX_STRAIGHT_STEP = 1000
 
 
 class Environment:
 
     def __init__(self, width=500, height=500,
-                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25, draw_debug=True,
-                 crw_factor=0.9, levy_factor=1.2,
+                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25, quantization_bits=3,
+                 draw_trace_debug=True, draw_communication_range_debug=True,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
         self.population = list()
         self.width = width
@@ -23,9 +26,10 @@ class Environment:
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
         self.robot_communication_radius = communication_radius
-        self.draw_debug = draw_debug
-        self.crw_factor = crw_factor
-        self.levy_factor = levy_factor
+        self.quantization_bits = quantization_bits
+        self.perceptible_gradient = None
+        self.draw_trace_debug = draw_trace_debug
+        self.draw_communication_range_debug = draw_communication_range_debug
         self.bool_noise = bool_noise
         self.noise_mu = noise_mu
         self.noise_musd = noise_musd
@@ -33,6 +37,7 @@ class Environment:
         self.img = None
         self.background = self.create_environment()
         self.create_robots()
+        self.init_robot_parameters()
         self.sensed_gradient = 0
 
     def load_images(self):
@@ -91,21 +96,31 @@ class Environment:
 
         return background
 
+    def init_robot_parameters(self):
+        random_walk.set_parameters(START_CRW_FACTOR, START_LEVY_FACTOR, START_MAX_STRAIGHT_STEP)
+        random_walk.init_values(self.quantization_bits)
+        self.perceptible_gradient = np.linspace(0.2, 1.0, num=self.quantization_bits)
+        print('perceptible_gradient ', self.perceptible_gradient)
+
     def get_sensors(self, robot):
         orientation = robot.orientation
         speed = robot.speed()
         sensors = {"GRADIENT": self.sense_gradient(robot),
-                   "FRONT": any(self.check_border_collision(robot, robot.pos[0] + speed * cos(radians(orientation)),
-                                                            robot.pos[1] + speed * sin(radians(orientation)))),
+                   "FRONT": any(
+                       self.check_border_collision(robot,
+                                                   robot.pos[0] + speed * cos(radians(orientation)),
+                                                   robot.pos[1] + speed * sin(radians(orientation)))),
                    "RIGHT": any(
-                       self.check_border_collision(robot, robot.pos[0] + speed * cos(radians((orientation - 90) % 360)),
+                       self.check_border_collision(robot,
+                                                   robot.pos[0] + speed * cos(radians((orientation - 90) % 360)),
                                                    robot.pos[1] + speed * sin(radians((orientation - 90) % 360)))),
-                   "BACK": any(self.check_border_collision(robot, robot.pos[0] + speed * cos(
-                       radians((orientation + 180) % 360)),
-                                                           robot.pos[1] + speed * sin(
-                                                               radians((orientation + 180) % 360)))),
+                   "BACK": any(
+                       self.check_border_collision(robot,
+                                                   robot.pos[0] + speed * cos(radians((orientation + 180) % 360)),
+                                                   robot.pos[1] + speed * sin(radians((orientation + 180) % 360)))),
                    "LEFT": any(
-                       self.check_border_collision(robot, robot.pos[0] + speed * cos(radians((orientation + 90) % 360)),
+                       self.check_border_collision(robot,
+                                                   robot.pos[0] + speed * cos(radians((orientation + 90) % 360)),
                                                    robot.pos[1] + speed * sin(radians((orientation + 90) % 360)))),
                    }
         # print(sensors)
@@ -132,7 +147,7 @@ class Environment:
         # self.draw_gradient_background(canvas)
         self.draw_background(canvas)
         for robot in self.population:
-            robot.draw(canvas, self.draw_debug)
+            robot.draw(canvas, self.draw_trace_debug, self.draw_communication_range_debug)
 
     def get_robot_at(self, x, y):
         selected = None
@@ -142,8 +157,14 @@ class Environment:
                 break
         return selected
 
+    def get_perceptible_gradient(self):
+        return self.perceptible_gradient
+
     def switch_draw_trace(self):
-        self.draw_debug = not self.draw_debug
+        self.draw_trace_debug = not self.draw_trace_debug
+
+    def switch_draw_communication_range(self):
+        self.draw_communication_range_debug = not self.draw_communication_range_debug
 
     def draw_gradient_background(self, canvas):
         # Iterate through the color and fill the rectangle with colors(r,g,0)

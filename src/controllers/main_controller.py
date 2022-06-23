@@ -1,4 +1,3 @@
-from helpers import random_walk
 from model.environment import Environment
 
 
@@ -28,16 +27,13 @@ class MainController:
 
     def __init__(self, config: Configuration):
         self.config = config
-        random_walk.set_parameters(crw_factor=self.config.parameters["CRW_FACTOR"],
-                                   levy_factor=self.config.parameters["LEVY_FACTOR"])
         self.environment = Environment(width=self.config.parameters["WIDTH"],
                                        height=self.config.parameters["HEIGHT"],
                                        nb_robots=self.config.parameters["NB_ROBOTS"],
                                        robot_speed=self.config.parameters["ROBOT_SPEED"],
                                        communication_radius=self.config.parameters["COMMUNICATION_RADIUS"],
                                        robot_radius=self.config.parameters["ROBOT_RADIUS"],
-                                       crw_factor=self.config.parameters["CRW_FACTOR"],
-                                       levy_factor=self.config.parameters["LEVY_FACTOR"],
+                                       quantization_bits=config.parameters["QUANTIZATION_BITS"],
                                        bool_noise=self.config.parameters["NOISE_FLAG"],
                                        noise_mu=self.config.parameters["NOISE_MU"],
                                        noise_musd=self.config.parameters["NOISE_MUSD"],

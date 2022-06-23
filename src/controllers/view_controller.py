@@ -27,13 +27,6 @@ class ViewController:
                                                     font="Arial 13 bold", anchor="nw")
         self.debug_text = self.debug_canvas.create_text(5, 25, fill="gray30", text=f"No robot selected",
                                                         anchor="nw", font="Arial 10")
-        self.debug_text_1 = self.debug_canvas.create_text(5, 200, fill="gray30",
-                                                          text=f"White and red state show only\n"
-                                                               f"in which half of the field the\n"
-                                                               f"robot is moving\n"
-                                                               f"(maybe different colours\n"
-                                                               f"can represent quantization)",
-                                                          anchor="nw", font="Arial 10")
 
         self.animation_ended = False
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -94,6 +87,7 @@ class ViewController:
         self.root.bind("<Button-1>", self.select_robot)
         self.root.bind("<n>", lambda event: self.controller.step())
         self.root.bind("<t>", lambda event: self.controller.environment.switch_draw_trace())
+        self.root.bind("<c>", lambda event: self.controller.environment.switch_draw_communication_range())
 
     def on_closing(self):
         self.animation_ended = True

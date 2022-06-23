@@ -1,9 +1,15 @@
 from math import cos, radians, pi
 import numpy as np
 
+# factors
 __crw_weights = []
 __levy_weights = []
 __max_levy_steps = 1000
+
+# possible combination of values depending on the environment
+__crw_values = []
+__levy_values = []
+__max_straight_steps_values = []
 
 
 def crw_pdf(thetas, crw_factor):
@@ -24,10 +30,21 @@ def levy_pdf(max_steps, levy_factor):
 
 
 def set_parameters(crw_factor, levy_factor, max_levy_steps=1000):
-    global __crw_weights, __levy_weights
+    global __crw_weights, __levy_weights, __max_levy_steps
     thetas = np.arange(0, 360)
     __crw_weights = crw_pdf(thetas, crw_factor)
     __levy_weights = levy_pdf(max_levy_steps, levy_factor)
+    __max_levy_steps = max_levy_steps
+
+
+def init_values(quantization_bits):
+    global __crw_values, __levy_values, __max_straight_steps_values
+    __crw_values = np.linspace(0.0, 0.99, num=quantization_bits)
+    __levy_values = np.linspace(2.0, 1.2, num=quantization_bits)
+    __max_straight_steps_values = np.linspace(1, 1000, num=quantization_bits, dtype=int)
+    print('crw_values ', __crw_values)
+    print('levy_values ', __levy_values)
+    print('max_levy_values ', __max_straight_steps_values)
 
 
 def get_crw_weights():
@@ -40,3 +57,15 @@ def get_levy_weights():
 
 def get_max_levy_steps():
     return __max_levy_steps
+
+
+def get_crw_values():
+    return __crw_values
+
+
+def get_levy_values():
+    return __levy_values
+
+
+def get_max_straight_steps_values():
+    return __max_straight_steps_values

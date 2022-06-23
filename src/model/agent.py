@@ -16,6 +16,7 @@ class AgentAPI:
         self.get_levy_turn_angle = agent.get_levy_turn_angle
         self.reset_levy_counter = agent.reset_levy_counter
         self.get_mu = agent.noise_mu
+        self.get_perceptible_gradient = agent.environment.get_perceptible_gradient()
 
 
 class Agent:
@@ -53,6 +54,12 @@ class Agent:
         return f"ID: {self.id}\n" \
                f"drift: {round(self.noise_mu, 5)}\n" \
                f"position: {np.round(self.pos, 2)}\n" \
+               f"angle: {np.round(self.orientation, 2)}\n" \
+               f"dr: {self.behavior.get_dr()}\n" \
+               f"FRONT: {self.environment.get_sensors(self)['FRONT']}\n" \
+               f"BACK: {self.environment.get_sensors(self)['BACK']}\n" \
+               f"RIGHT: {self.environment.get_sensors(self)['RIGHT']}\n" \
+               f"LEFT: {self.environment.get_sensors(self)['LEFT']}\n" \
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
                f"alpha: {np.round(self.behavior.get_rw_factors()[1], 2)}\n" \
                f"lambda: {np.round(self.behavior.get_rw_factors()[2], 2)}\n" \
@@ -121,7 +128,7 @@ class Agent:
         self.levy_counter = 1
         # self.get_levy_turn_angle()
 
-    def draw(self, canvas, draw_debug):
+    def draw(self, canvas, draw_trace_debug, draw_communication_debug):
         circle = canvas.create_oval(self.pos[0] - self._radius,
                                     self.pos[1] - self._radius,
                                     self.pos[0] + self._radius,
@@ -131,8 +138,9 @@ class Agent:
                                     width=4)
 
         self.draw_orientation(canvas)
-        if draw_debug:
+        if draw_trace_debug:
             self.draw_trace(canvas)
+        if draw_communication_debug:
             self.draw_comm_radius(canvas)
 
     def draw_trace(self, canvas):
