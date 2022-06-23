@@ -1,3 +1,4 @@
+from helpers import random_walk
 from model.environment import Environment
 
 
@@ -17,8 +18,12 @@ class Configuration:
     def add_to_parameters(self, parameter, value):
         float_params = {"CRW_FACTOR", "ROBOT_SPEED", "LEVY_FACTOR", "NOISE_MU", "NOISE_MUSD",
                         "NOISE_SD", "COMMUNICATION_RADIUS"}
+        # TODO: maybe log put should be in the main file
+        string_params = {"LOG_PATH"}
         if parameter in float_params:
             self.parameters[parameter] = float(value)
+        elif parameter in string_params:
+            self.parameters[parameter] = str(value)
         else:
             self.parameters[parameter] = int(value)
 
@@ -55,6 +60,8 @@ class MainController:
         print(f"Overall gradient for {self.config.parameters['NB_ROBOTS']} robots: "
               f"{self.get_overall_gradient()}")
         # print(f"Time taken for {self.config.p-arameters['SIMULATION_STEPS']} steps: {time.time()-now}")
+        # print(f"Time taken for {self.config.parameters['SIMULATION_STEPS']} steps: {time.time()-now}")
+        self.environment.write_log(self.config.parameters["LOG_PATH"])
 
     def get_robot_at(self, x, y):
         return self.environment.get_robot_at(x, y)

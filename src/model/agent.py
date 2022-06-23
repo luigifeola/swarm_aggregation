@@ -17,6 +17,9 @@ class AgentAPI:
         self.reset_levy_counter = agent.reset_levy_counter
         self.get_mu = agent.noise_mu
         self.get_perceptible_gradient = agent.environment.get_perceptible_gradient()
+        self.get_tick = agent.get_tick
+        self.pos = agent.pos
+        self.set_speed = agent.set_speed
 
 
 class Agent:
@@ -50,6 +53,8 @@ class Agent:
         self.behavior = behavior
         self.api = AgentAPI(self)
 
+        self.tick = 0
+
     def __str__(self):
         return f"ID: {self.id}\n" \
                f"drift: {round(self.noise_mu, 5)}\n" \
@@ -63,7 +68,8 @@ class Agent:
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
                f"alpha: {np.round(self.behavior.get_rw_factors()[1], 2)}\n" \
                f"lambda: {np.round(self.behavior.get_rw_factors()[2], 2)}\n" \
-               f"gradient [0 - 1]: {np.round(self.environment.sense_gradient(self), 2)}"
+               f"gradient [0 - 1]: {np.round(self.environment.sense_gradient(self), 2)}\n" \
+               f"neighbors: {self.environment.sense_neighbors(self)}"
 
     def __repr__(self):
         return f"bot {self.id}"
@@ -78,6 +84,7 @@ class Agent:
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
         self.update_trace()
+        self.tick += 1
 
     def update_trace(self):
         self.trace.appendleft(self.pos[1])
@@ -128,6 +135,9 @@ class Agent:
         self.levy_counter = 1
         # self.get_levy_turn_angle()
 
+    def get_tick(self):
+        return self.tick
+
     def draw(self, canvas, draw_trace_debug, draw_communication_debug):
         circle = canvas.create_oval(self.pos[0] - self._radius,
                                     self.pos[1] - self._radius,
@@ -162,6 +172,9 @@ class Agent:
 
     def speed(self):
         return self._speed
+
+    def set_speed(self, speed):
+        self._speed = speed
 
     def radius(self):
         return self._radius

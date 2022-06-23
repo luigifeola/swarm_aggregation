@@ -3,9 +3,10 @@ from PIL import ImageTk, Image
 from helpers.utils import norm, distance_between, matrix_index_distances, rgb, get_pixel_col
 from random import randint, random
 import numpy as np
+import igraph as ig
 
 from model.agent import Agent
-from model.behavior import DiffusiveBehavior
+from model.behavior import DiffusiveBehavior, SocialBehavior
 from helpers import random_walk
 
 START_CRW_FACTOR = 0.9
@@ -34,29 +35,59 @@ class Environment:
         self.noise_mu = noise_mu
         self.noise_musd = noise_musd
         self.noise_sd = noise_sd
+        self.create_robots()
+        self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
         self.background = self.create_environment()
-        self.create_robots()
         self.init_robot_parameters()
         self.sensed_gradient = 0
+        # TODO: maybe could be at main file
+        self.lines_to_write = ["cluster_number,cluster_metric"]
 
     def load_images(self):
         self.img = ImageTk.PhotoImage(file="../assets/field.png")
 
+
     def step(self):
-        # compute neighbors
+        #1. Compute neighbors
         pop_size = len(self.population)
-        # pop_copy = copy.deepcopy(self.population)
-        neighbors_table = [[] for i in range(pop_size)]
+        self.neighbors_table = [[] for i in range(pop_size)]
         for id1 in range(pop_size):
             for id2 in range(id1 + 1, pop_size):
                 if distance_between(self.population[id1], self.population[id2]) < self.robot_communication_radius:
-                    neighbors_table[id1].append(self.population[id2])
-                    neighbors_table[id2].append(self.population[id1])
+                    self.neighbors_table[id1].append(self.population[id2])
+                    self.neighbors_table[id2].append(self.population[id1])
 
+        # print(self.neighbors_table)
         # 2. Move
         for robot in self.population:
             robot.step()
+
+        #3. Compute metrics
+        total_distance = 0
+        for robot1 in self.population:
+            for robot2 in self.population:
+                if robot1 != robot2:
+                    total_distance += distance_between(robot1, robot2)
+        total_distance = -total_distance
+        # print("Total distance = %s" % total_distance)
+
+        clusters = self.get_neighbors_graph().clusters()
+        # print("Number of clusters = %d" % len(clusters))
+        max = 0
+        cluster_count = len(clusters)
+        for cluster in clusters:
+            if(len(cluster) > max):
+                max = len(cluster)
+            if(len(cluster)==1):
+                cluster_count -= 1
+
+        # print("Largest cluster size = %d" % max)
+        cluster_metric = max/pop_size
+        # print("Cluster metric = %f" % cluster_metric)
+
+        self.lines_to_write.append(str(cluster_count) + "," + str(cluster_metric))
+
 
     def create_robots(self):
         for robot_id in range(self.nb_robots):
@@ -69,7 +100,9 @@ class Environment:
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
-                          behavior=DiffusiveBehavior(),
+                          # behavior=DiffusiveBehavior(),
+                          # TODO: find a better way to switch among behaviours
+                          behavior=SocialBehavior(),
                           environment=self)
             self.population.append(robot)
 
@@ -122,6 +155,7 @@ class Environment:
                        self.check_border_collision(robot,
                                                    robot.pos[0] + speed * cos(radians((orientation + 90) % 360)),
                                                    robot.pos[1] + speed * sin(radians((orientation + 90) % 360)))),
+                   "NEIGHBORS": self.sense_neighbors(robot),
                    }
         # print(sensors)
         return sensors
@@ -142,6 +176,18 @@ class Environment:
             collide_y = True
 
         return collide_x, collide_y
+
+    def sense_neighbors(self, robot):
+        return self.neighbors_table[robot.id]
+
+    def get_neighbors_graph(self):
+        edges = []
+        for i in range(len(self.neighbors_table)):
+            for j in range(len(self.neighbors_table[i])):
+                edges.append((i,int(self.neighbors_table[i][j].id)))
+
+        graph = ig.Graph(edges= edges)
+        return graph
 
     def draw(self, canvas):
         # self.draw_gradient_background(canvas)
