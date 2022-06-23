@@ -14,4 +14,4 @@ NOISE_FLAG=1
 NOISE_MU=0.05
 NOISE_MUSD=0.05
 NOISE_SD=0.05
-LOG_PATH=__logpath__
+LOG_PATH=../results/log1.csv

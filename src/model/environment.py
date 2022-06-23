@@ -1,8 +1,9 @@
-from math import cos, sin, radians
+from math import cos, sin, radians, dist
 from PIL import ImageTk
 from helpers.utils import norm, distance_between
 from random import randint, random
 import numpy as np
+import igraph as ig
 
 from model.agent import Agent
 from model.behavior import DiffusiveBehavior, SocialBehavior
@@ -37,13 +38,20 @@ class Environment:
         self.create_robots()
         self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
+        self.lines_to_write = ["cluster_number,cluster_metric"]
 
     def load_images(self):
         self.img = ImageTk.PhotoImage(file="../assets/field.png")
 
+    def write_log(self, log_path):
+        print("Writing in %s" % log_path)
+        with open(log_path, 'w') as f:
+            for line in self.lines_to_write:
+                f.write(line)
+                f.write('\n')
 
     def step(self):
-        # compute neighbors
+        #1. Compute neighbors
         pop_size = len(self.population)
         self.neighbors_table = [[] for i in range(pop_size)]
         for id1 in range(pop_size):
@@ -56,6 +64,32 @@ class Environment:
         # 2. Move
         for robot in self.population:
             robot.step()
+
+        #3. Compute metrics
+        total_distance = 0
+        for robot1 in self.population:
+            for robot2 in self.population:
+                if robot1 != robot2:
+                    total_distance += dist(robot1.pos, robot2.pos)
+        total_distance = -total_distance
+        # print("Total distance = %s" % total_distance)
+
+        clusters = self.get_neighbors_graph().clusters()
+        # print("Number of clusters = %d" % len(clusters))
+        max = 0
+        cluster_count = len(clusters)
+        for cluster in clusters:
+            if(len(cluster) > max):
+                max = len(cluster)
+            if(len(cluster)==1):
+                cluster_count -= 1
+
+        # print("Largest cluster size = %d" % max)
+        cluster_metric = max/pop_size
+        # print("Cluster metric = %f" % cluster_metric)
+
+        self.lines_to_write.append(str(cluster_count) + "," + str(cluster_metric))
+
 
     def create_robots(self):
         for robot_id in range(self.nb_robots):
@@ -109,6 +143,15 @@ class Environment:
 
     def sense_neighbors(self, robot):
         return self.neighbors_table[robot.id]
+
+    def get_neighbors_graph(self):
+        edges = []
+        for i in range(len(self.neighbors_table)):
+            for j in range(len(self.neighbors_table[i])):
+                edges.append((i,int(self.neighbors_table[i][j].id)))
+
+        graph = ig.Graph(edges= edges)
+        return graph
 
     def draw(self, canvas):
         # self.draw_gradient_background(canvas)

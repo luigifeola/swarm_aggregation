@@ -16,6 +16,8 @@ class AgentAPI:
         self.get_levy_turn_angle = agent.get_levy_turn_angle
         self.get_mu = agent.noise_mu
         self.get_tick = agent.get_tick
+        self.pos = agent.pos
+        self.set_speed = agent.set_speed
 
 
 class Agent:
@@ -154,6 +156,9 @@ class Agent:
 
     def speed(self):
         return self._speed
+
+    def set_speed(self, speed):
+        self._speed = speed
 
     def radius(self):
         return self._radius

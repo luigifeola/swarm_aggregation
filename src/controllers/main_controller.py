@@ -18,8 +18,11 @@ class Configuration:
     def add_to_parameters(self, parameter, value):
         float_params = {"CRW_FACTOR", "ROBOT_SPEED", "LEVY_FACTOR", "NOISE_MU", "NOISE_MUSD",
                         "NOISE_SD", "COMMUNICATION_RADIUS"}
+        string_params = {"LOG_PATH"}
         if parameter in float_params:
             self.parameters[parameter] = float(value)
+        elif parameter in string_params:
+            self.parameters[parameter] = str(value)
         else:
             self.parameters[parameter] = int(value)
 
@@ -55,6 +58,7 @@ class MainController:
         for step_nb in range(self.config.parameters["SIMULATION_STEPS"]):
             self.step()
         # print(f"Time taken for {self.config.parameters['SIMULATION_STEPS']} steps: {time.time()-now}")
+        self.environment.write_log(self.config.parameters["LOG_PATH"])
 
     def get_robot_at(self, x, y):
         return self.environment.get_robot_at(x, y)
