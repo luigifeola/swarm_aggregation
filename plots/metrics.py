@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 results_size = 10
 results = []
 for i in range(results_size):
-    df = pd.read_csv("../results/log" + str(i+1) + ".csv")
+    df = pd.read_csv("../results/log" + str(i) + ".csv")
     results.append(df)
 
 print(results)
