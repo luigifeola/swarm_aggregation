@@ -42,9 +42,9 @@ def init_values(quantization_bits):
     __crw_values = np.linspace(0.0, 0.99, num=quantization_bits)
     __levy_values = np.linspace(2.0, 1.2, num=quantization_bits)
     __max_straight_steps_values = np.linspace(1, 1000, num=quantization_bits, dtype=int)
-    print('crw_values ', __crw_values)
-    print('levy_values ', __levy_values)
-    print('max_levy_values ', __max_straight_steps_values)
+    # print('crw_values ', __crw_values)
+    # print('levy_values ', __levy_values)
+    # print('max_levy_values ', __max_straight_steps_values)
 
 
 def get_crw_weights():

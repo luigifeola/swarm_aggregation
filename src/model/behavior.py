@@ -61,10 +61,19 @@ class SocialBehavior(Behavior):
             alpha = 1 #between 0 and 1
             beta = 0.2 #between 0 and +inf
             exp_factor = alpha * exp(-beta * neighbors_nbr)
+
+            #Implementation 1 : exp_factor directly influence the RW factors + speed
+            # self.crw_factor = 0.99 * exp_factor
+            # self.levy_factor = -0.8 * exp_factor + 2
+            # #taking speed into account ?
+            # api.set_speed(self.base_speed * exp_factor)
+
+            #Implementation 2: exp_factor directly influence the RW factors + max_levy_steps
             self.crw_factor = 0.99 * exp_factor
             self.levy_factor = -0.8 * exp_factor + 2
-            #taking speed into account ?
-            api.set_speed(self.base_speed * exp_factor)
+            self.max_levy_steps = int(1000 * exp_factor)
+            if self.max_levy_steps == 0:
+                self.max_levy_steps = 1
 
     def update_movement_based_on_state(self, sensors, api):
         turn_angle = api.get_levy_turn_angle()
@@ -127,5 +136,3 @@ class DiffusiveBehavior(Behavior):
             # self.dr[0] = rotate(self.dr)
             return True
         return False
-
-
