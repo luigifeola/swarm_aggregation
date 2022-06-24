@@ -41,8 +41,7 @@ class Environment:
         self.background = self.create_environment()
         self.init_robot_parameters()
         self.sensed_gradient = 0
-        # TODO: maybe could be at main file
-        self.lines_to_write = ["cluster_number,cluster_metric"]
+        self.metrics = ["cluster_number,cluster_metric"]
 
     def load_images(self):
         self.img = ImageTk.PhotoImage(file="../assets/field.png")
@@ -86,7 +85,7 @@ class Environment:
         cluster_metric = max/pop_size
         # print("Cluster metric = %f" % cluster_metric)
 
-        self.lines_to_write.append(str(cluster_count) + "," + str(cluster_metric))
+        self.metrics.append(str(cluster_count) + "," + str(cluster_metric))
 
 
     def create_robots(self):
