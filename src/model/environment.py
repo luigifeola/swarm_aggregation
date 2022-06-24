@@ -19,7 +19,7 @@ class Environment:
     def __init__(self, width=500, height=500,
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25, quantization_bits=3,
                  draw_trace_debug=True, draw_communication_range_debug=True,
-                 bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
+                 bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1, robot_behavior=1):
         self.population = list()
         self.width = width
         self.height = height
@@ -35,6 +35,7 @@ class Environment:
         self.noise_mu = noise_mu
         self.noise_musd = noise_musd
         self.noise_sd = noise_sd
+        self.robot_behavior = robot_behavior
         self.create_robots()
         self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
@@ -99,9 +100,7 @@ class Environment:
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
-                          # behavior=DiffusiveBehavior(),
-                          # TODO: find a better way to switch among behaviours
-                          behavior=SocialBehavior(),
+                          behavior=DiffusiveBehavior() if self.robot_behavior == 1 else SocialBehavior(),
                           environment=self)
             self.population.append(robot)
 
@@ -132,7 +131,7 @@ class Environment:
         random_walk.set_parameters(START_CRW_FACTOR, START_LEVY_FACTOR, START_MAX_STRAIGHT_STEP)
         random_walk.init_values(self.quantization_bits)
         self.perceptible_gradient = np.linspace(0.2, 1.0, num=self.quantization_bits)
-        print('perceptible_gradient ', self.perceptible_gradient)
+        # print('perceptible_gradient ', self.perceptible_gradient)
 
     def get_sensors(self, robot):
         orientation = robot.orientation
