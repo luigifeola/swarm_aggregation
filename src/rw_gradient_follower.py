@@ -18,7 +18,8 @@ def main():
     else:
         for arg in argv[2:]:
             config = Configuration(config_file=arg)
-            run_processes(config)
+            # run_processes(config)       # this is for parallel runs
+            run(config)                 # this is for single run
 
 
 def run_processes(config: Configuration):
@@ -51,6 +52,9 @@ def run(config):
     os.makedirs(filepath, exist_ok=True)
     with open(f"{filepath}/{filename}", "a") as file:
         file.write(str(controller.get_overall_gradient())+'\n')
+    # print(f"Overall gradient for {config.parameters['NB_ROBOTS']} robots: "
+    #       f"{controller.get_overall_gradient()}")
+    print(f"{controller.get_overall_gradient()}")
 
 
 if __name__ == '__main__':

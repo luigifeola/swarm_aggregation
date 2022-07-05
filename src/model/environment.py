@@ -14,20 +14,28 @@ START_LEVY_FACTOR = 1.2
 START_MAX_STRAIGHT_STEP = 1000
 
 
+
 class Environment:
 
-    def __init__(self, width=500, height=500,
-                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25, quantization_bits=3,
-                 draw_trace_debug=True, draw_communication_range_debug=True,
+    def __init__(self,
+                 crw_params, levy_params, max_straight_steps_params, quantization_bits=3,
+                 width=500, height=500,
+                 center_gradient=[500//2, 500//2],
+                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
+                 draw_trace_debug=False, draw_communication_range_debug=False,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
         self.population = list()
         self.width = width
         self.height = height
+        self.center_gradient = center_gradient
         self.nb_robots = nb_robots
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
         self.robot_communication_radius = communication_radius
         self.quantization_bits = quantization_bits
+        self.crw_params = crw_params
+        self.levy_params = levy_params
+        self.max_straight_steps_params = max_straight_steps_params
         self.perceptible_gradient = None
         self.draw_trace_debug = draw_trace_debug
         self.draw_communication_range_debug = draw_communication_range_debug
@@ -46,9 +54,8 @@ class Environment:
     def load_images(self):
         self.img = ImageTk.PhotoImage(file="../assets/field.png")
 
-
     def step(self):
-        #1. Compute neighbors
+        # 1. Compute neighbors
         pop_size = len(self.population)
         self.neighbors_table = [[] for i in range(pop_size)]
         for id1 in range(pop_size):
@@ -62,7 +69,7 @@ class Environment:
         for robot in self.population:
             robot.step()
 
-        #3. Compute metrics
+        # 3. Compute metrics
         total_distance = 0
         for robot1 in self.population:
             for robot2 in self.population:
@@ -73,20 +80,19 @@ class Environment:
 
         clusters = self.get_neighbors_graph().clusters()
         # print("Number of clusters = %d" % len(clusters))
-        max = 0
+        max_val = 0
         cluster_count = len(clusters)
         for cluster in clusters:
-            if(len(cluster) > max):
-                max = len(cluster)
-            if(len(cluster)==1):
+            if len(cluster) > max_val:
+                max_val = len(cluster)
+            if len(cluster) == 1:
                 cluster_count -= 1
 
         # print("Largest cluster size = %d" % max)
-        cluster_metric = max/pop_size
+        cluster_metric = max_val / pop_size
         # print("Cluster metric = %f" % cluster_metric)
 
         self.metrics.append(str(cluster_count) + "," + str(cluster_metric))
-
 
     def create_robots(self):
         for robot_id in range(self.nb_robots):
@@ -99,9 +105,9 @@ class Environment:
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
-                          # behavior=DiffusiveBehavior(),
+                          behavior=DiffusiveBehavior(),
                           # TODO: find a better way to switch among behaviours
-                          behavior=SocialBehavior(),
+                          # behavior=SocialBehavior(),
                           environment=self)
             self.population.append(robot)
 
@@ -109,12 +115,16 @@ class Environment:
         background = Image.new('L', (self.width, self.height))
         outerColor = 255
         innerColor = 0
-        center_gradient = np.array([randint(0, self.width), randint(0, self.height)])
+        # TODO: center gradient position should be loaded from the config file
+        # center_gradient = np.array([randint(0, self.width), randint(0, self.height)])
+        # print('Center of the gradient positioned at: ', center_gradient)
+        # with open(f"~/swarm_aggregation/data/center_gradient_positions.txt", "a") as file:
+        #     file.write(str(self.center_gradient) + '\n')
         # Make it on a scale from 0 to 1
-        max_gradient_width = max(self.width - center_gradient[0], center_gradient[0])
-        max_gradient_height = max(self.height - center_gradient[1], center_gradient[1])
+        max_gradient_width = max(self.width - self.center_gradient[0], self.center_gradient[0])
+        max_gradient_height = max(self.height - self.center_gradient[1], self.center_gradient[1])
         max_distance = max(max_gradient_width, max_gradient_height)
-        distances = matrix_index_distances(np.zeros((self.width, self.height)), index=center_gradient)
+        distances = matrix_index_distances(np.zeros((self.width, self.height)), index=self.center_gradient)
         distances = distances / max_distance
         for y in range(0, self.height, 2):
             for x in range(0, self.width, 2):
@@ -130,9 +140,9 @@ class Environment:
 
     def init_robot_parameters(self):
         random_walk.set_parameters(START_CRW_FACTOR, START_LEVY_FACTOR, START_MAX_STRAIGHT_STEP)
-        random_walk.init_values(self.quantization_bits)
-        self.perceptible_gradient = np.linspace(0.2, 1.0, num=self.quantization_bits)
-        print('perceptible_gradient ', self.perceptible_gradient)
+        random_walk.init_values(self.crw_params, self.levy_params, self.max_straight_steps_params)
+        self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
+        # print('perceptible_gradient ', self.perceptible_gradient)
 
     def get_sensors(self, robot):
         orientation = robot.orientation
@@ -162,8 +172,10 @@ class Environment:
     def sense_gradient(self, robot):
         # return 255 - (255 * robot.pos[0]) // self.width
         gradient_t = get_pixel_col(self.background, robot.pos)
-        self.sensed_gradient += gradient_t
         return gradient_t
+
+    def update_overall_gradient(self, gradient_t):
+        self.sensed_gradient += gradient_t
 
     def check_border_collision(self, robot, new_x, new_y):
         collide_x = False
@@ -183,9 +195,9 @@ class Environment:
         edges = []
         for i in range(len(self.neighbors_table)):
             for j in range(len(self.neighbors_table[i])):
-                edges.append((i,int(self.neighbors_table[i][j].id)))
+                edges.append((i, int(self.neighbors_table[i][j].id)))
 
-        graph = ig.Graph(edges= edges)
+        graph = ig.Graph(edges=edges)
         return graph
 
     def draw(self, canvas):

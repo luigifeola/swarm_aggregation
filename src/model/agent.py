@@ -3,10 +3,9 @@ from random import random, choices, gauss
 from math import sin, cos, radians
 from collections import deque
 
-from model.behavior import State
 import numpy as np
 
-from helpers.utils import get_orientation_from_vector, rotate
+from helpers.utils import get_orientation_from_vector, rotate, rgb
 
 
 class AgentAPI:
@@ -20,10 +19,11 @@ class AgentAPI:
         self.get_tick = agent.get_tick
         self.pos = agent.pos
         self.set_speed = agent.set_speed
+        self.set_gradient = agent.set_gradient
+        self.get_gradient = agent.get_gradient
 
 
 class Agent:
-    colors = {State.EXPLORING: "black", State.INTENSE_LIGHT: "red", State.DARK_LIGHT: "white"}
 
     def __init__(self, robot_id, x, y, speed, radius,
                  bool_noise, noise_mu, noise_musd, noise_sd,
@@ -47,6 +47,8 @@ class Agent:
         self.crw_weights = rw.get_crw_weights()
         self.max_levy_steps = 1000
 
+        self.gradient = None
+
         self.levy_counter = 1
         self.trace = deque(self.pos, maxlen=100)
 
@@ -61,14 +63,11 @@ class Agent:
                f"position: {np.round(self.pos, 2)}\n" \
                f"angle: {np.round(self.orientation, 2)}\n" \
                f"dr: {self.behavior.get_dr()}\n" \
-               f"FRONT: {self.environment.get_sensors(self)['FRONT']}\n" \
-               f"BACK: {self.environment.get_sensors(self)['BACK']}\n" \
-               f"RIGHT: {self.environment.get_sensors(self)['RIGHT']}\n" \
-               f"LEFT: {self.environment.get_sensors(self)['LEFT']}\n" \
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
                f"alpha: {np.round(self.behavior.get_rw_factors()[1], 2)}\n" \
                f"lambda: {np.round(self.behavior.get_rw_factors()[2], 2)}\n" \
-               f"gradient [0 - 1]: {np.round(self.environment.sense_gradient(self), 2)}\n" \
+               f"perceived gradient [0 - 1]: {self.gradient}\n" \
+               f"real gradient [0 - 1]: {np.round(self.environment.sense_gradient(self), 2)}\n" \
                f"neighbors: {self.environment.sense_neighbors(self)}"
 
     def __repr__(self):
@@ -85,6 +84,7 @@ class Agent:
         self.move()
         self.update_trace()
         self.tick += 1
+        self.environment.update_overall_gradient(self.gradient)
 
     def update_trace(self):
         self.trace.appendleft(self.pos[1])
@@ -124,6 +124,12 @@ class Agent:
         self.levy_weights = rw.levy_pdf(max_levy_steps, levy_factor)
         self.max_levy_steps = max_levy_steps
 
+    def set_gradient(self, gradient):
+        self.gradient = gradient
+
+    def get_gradient(self):
+        return self.gradient
+
     def get_levy_turn_angle(self):
         angle = 0
         if self.levy_counter <= 1:
@@ -139,12 +145,14 @@ class Agent:
         return self.tick
 
     def draw(self, canvas, draw_trace_debug, draw_communication_debug):
+        grey_val = int(255 - self.gradient*255)
+        outline_col = rgb(grey_val, grey_val, grey_val,)
         circle = canvas.create_oval(self.pos[0] - self._radius,
                                     self.pos[1] - self._radius,
                                     self.pos[0] + self._radius,
                                     self.pos[1] + self._radius,
                                     fill=self.behavior.color,
-                                    outline=self.colors[self.behavior.state],
+                                    outline=outline_col,   # self.colors[self.behavior.state],
                                     width=4)
 
         self.draw_orientation(canvas)
