@@ -16,11 +16,13 @@ class AgentAPI:
         self.reset_levy_counter = agent.reset_levy_counter
         self.get_mu = agent.noise_mu
         self.get_perceptible_gradient = agent.environment.get_perceptible_gradient()
+        self.set_gradient = agent.set_gradient
+        self.get_gradient = agent.get_gradient
         self.get_tick = agent.get_tick
         self.pos = agent.pos
         self.set_speed = agent.set_speed
-        self.set_gradient = agent.set_gradient
-        self.get_gradient = agent.get_gradient
+        self.stop_exploration = agent.stop_exploration
+        self.resume_exploration = agent.resume_exploration
 
 
 class Agent:
@@ -32,6 +34,7 @@ class Agent:
         self.id = robot_id
         self.pos = np.array([x, y]).astype('float64')
         self._speed = speed
+        self.max_speed = speed
         self._radius = radius
         self.orientation = random() * 360  # 360 degree angle
 
@@ -183,6 +186,12 @@ class Agent:
 
     def set_speed(self, speed):
         self._speed = speed
+
+    def stop_exploration(self):
+        self._speed = 0
+
+    def resume_exploration(self):
+        self._speed = self.max_speed
 
     def radius(self):
         return self._radius

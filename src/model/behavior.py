@@ -5,7 +5,12 @@ from math import cos, radians, sin, exp
 from helpers.utils import get_orientation_from_vector, norm
 from helpers import random_walk as rw
 from helpers.utils import rotate
+from random import randint
 
+
+class State(Enum):
+    EXPLORING = 1
+    RESTING = 2
 
 
 class Behavior(ABC):
@@ -75,6 +80,8 @@ class DiffusiveBehavior(Behavior):
 
     def __init__(self):
         super().__init__()
+
+        self.state = State.EXPLORING
 
         self.crw_factor = 0.5
         self.levy_factor = 1.5
