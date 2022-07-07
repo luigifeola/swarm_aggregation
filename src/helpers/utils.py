@@ -38,7 +38,7 @@ def rgb(r, g, b):
                               for c in (r, g, b)])
 
 
-def get_pixel_col(img, pixel):
-    return img.getpixel((pixel[0], pixel[1])) / 255
+def get_pixel_col(np_img, pixel):
+    return np_img[pixel[0], pixel[1]] / 255
 
 

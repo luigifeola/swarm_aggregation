@@ -1,5 +1,4 @@
 from math import cos, sin, radians
-from PIL import ImageTk, Image
 from helpers.utils import norm, distance_between, matrix_index_distances, rgb, get_pixel_col
 from random import randint, random
 import numpy as np
@@ -51,8 +50,6 @@ class Environment:
         self.sensed_gradient = 0
         self.metrics = ["cluster_number,cluster_metric"]
 
-    def load_images(self):
-        self.img = ImageTk.PhotoImage(file="../assets/field.png")
 
     def step(self):
         # 1. Compute neighbors
@@ -112,15 +109,10 @@ class Environment:
             self.population.append(robot)
 
     def create_environment(self):
-        background = Image.new('L', (self.width, self.height))
+        # background = Image.new('L', (self.width, self.height))
+        background = 255 * np.ones([self.width, self.height])
         outerColor = 255
         innerColor = 0
-        # TODO: center gradient position should be loaded from the config file
-        # center_gradient = np.array([randint(0, self.width), randint(0, self.height)])
-        # print('Center of the gradient positioned at: ', center_gradient)
-        # with open(f"~/swarm_aggregation/data/center_gradient_positions.txt", "a") as file:
-        #     file.write(str(self.center_gradient) + '\n')
-        # Make it on a scale from 0 to 1
         max_gradient_width = max(self.width - self.center_gradient[0], self.center_gradient[0])
         max_gradient_height = max(self.height - self.center_gradient[1], self.center_gradient[1])
         max_distance = max(max_gradient_width, max_gradient_height)
@@ -131,10 +123,12 @@ class Environment:
                 # Find the distance to the center
                 distanceToCenter = distances[x, y]
                 gray = int(outerColor * distanceToCenter + innerColor * (1 - distanceToCenter))
-                background.putpixel((x, y), gray)
-                background.putpixel((x + 1, y), gray)
-                background.putpixel((x, y + 1), gray)
-                background.putpixel((x + 1, y + 1), gray)
+                if gray > 255:
+                    gray = 255
+                background[x, y] = gray
+                background[x+1, y] = gray
+                background[x, y+1] = gray
+                background[x+1, y+1] = gray
 
         return background
 
@@ -171,7 +165,7 @@ class Environment:
 
     def sense_gradient(self, robot):
         # return 255 - (255 * robot.pos[0]) // self.width
-        gradient_t = get_pixel_col(self.background, robot.pos)
+        gradient_t = get_pixel_col(self.background, np.array(robot.pos).astype('int'))
         return gradient_t
 
     def update_overall_gradient(self, gradient_t):
@@ -223,17 +217,7 @@ class Environment:
     def switch_draw_communication_range(self):
         self.draw_communication_range_debug = not self.draw_communication_range_debug
 
-    def draw_gradient_background(self, canvas):
-        # Iterate through the color and fill the rectangle with colors(r,g,0)
-        for x in range(0, self.width + 1):
-            r = 255 - (x * 255) // self.width
-            g = 255 - (x * 255) // self.width
-            # g = 255 if x < 128 else 255 - (x - 128) * 2
-            b = 255 - (x * 255) // self.width
-            # print(x, g)
-            # canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(0, g, 0), outline=rgb(0, g, 0))
-            canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(r, g, b), outline=rgb(r, g, b))
-
     def draw_background(self, canvas):
-        self.img = ImageTk.PhotoImage(self.background)
+        from PIL import ImageTk, Image
+        self.img = ImageTk.PhotoImage(Image.fromarray(np.uint8(self.background)))
         canvas.create_image(0, 0, image=self.img, anchor='nw')

@@ -13,9 +13,6 @@ import shutil
 
 
 def main():
-    # for i, arg in enumerate(argv):
-    #     print(i, ' ', arg)
-    print(argv)
     random.seed(argv[1])
     config_file = generate_config_file(argv[1:])
     # print('config_file: ', config_file)
@@ -77,4 +74,4 @@ def generate_config_file(list_args):
 
 
 if __name__ == '__main__':
-    print(f"{main()}")
+    print(main())
