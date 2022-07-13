@@ -79,8 +79,8 @@ class Environment:
         for cluster in clusters:
             if(len(cluster) > max):
                 max = len(cluster)
-            if(len(cluster)==1):
-                cluster_count -= 1
+            # if(len(cluster)==1):
+            #     cluster_count -= 1
 
         # print("Largest cluster size = %d" % max)
         cluster_metric = max/pop_size
