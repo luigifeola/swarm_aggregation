@@ -1,4 +1,3 @@
-from helpers import random_walk
 from model.environment import Environment
 
 

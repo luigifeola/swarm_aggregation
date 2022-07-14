@@ -1,16 +1,12 @@
 from math import cos, sin, radians
 from helpers.utils import norm, distance_between, matrix_index_distances, rgb, get_pixel_col
-from random import randint, random
+from random import randint
 import numpy as np
 import igraph as ig
 
 from model.agent import Agent
 from model.behavior import DiffusiveBehavior, SocialBehavior
 from helpers import random_walk
-
-START_CRW_FACTOR = 0.9
-START_LEVY_FACTOR = 1.2
-START_MAX_STRAIGHT_STEP = 1000
 
 
 
@@ -133,7 +129,6 @@ class Environment:
         return background
 
     def init_robot_parameters(self):
-        random_walk.set_parameters(START_CRW_FACTOR, START_LEVY_FACTOR, START_MAX_STRAIGHT_STEP)
         random_walk.init_values(self.crw_params, self.levy_params, self.max_straight_steps_params)
         self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
         # print('perceptible_gradient ', self.perceptible_gradient)

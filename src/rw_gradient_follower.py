@@ -4,11 +4,25 @@ from multiprocessing import Process, cpu_count
 from sys import argv
 import os
 import random
+import numpy as np
+import shutil
+
+
+# to run the best result from irace with 3 quantization bits:
+# 6515485 1 1 /home/luigi/swarm_aggregation/config/config_batch.txt 3 --a0 1.9689 --r0 0.606 --st0 1 --a1 1.3391 --r1 0.3714 --st1 389 --a2 1.2121 --r2 0.8337 --st2 948
+## 6515485 1 1 /home/luigi/swarm_aggregation/config/config_batch.txt 4 --a0 1.9353 --r0 0.1620 --st0 503 --a1 1.966 --r1 0.27 --st1 762 --a2 1.218 --r2 0.3619 --st2 135 --a3 1.2229 --r3 0.8927 --st3 352
+
+# alpha0   rho0 str_steps0 alpha1   rho1 str_steps1 alpha2   rho2 str_steps2 alpha3   rho3 str_steps3
+# 1.9353 0.1620        503 1.9660 0.0270        762 1.2184 0.3619        135 1.2229 0.8927        352
+
+
+home_path = os.path.expanduser('~')
 
 
 def main():
     random.seed(argv[1])
-    config = Configuration(config_file=argv[2])
+    config_file = generate_config_file(argv[1:])
+    config = Configuration(config_file=config_file)
     if config.parameters["VISUALIZE"] != 0:
         main_controller = MainController(config)
         _ = ViewController(main_controller,
@@ -16,10 +30,41 @@ def main():
                            config.parameters["HEIGHT"],
                            config.parameters["FPS"])
     else:
-        for arg in argv[2:]:
-            config = Configuration(config_file=arg)
-            # run_processes(config)       # this is for parallel runs
-            run(config)                 # this is for single run
+        run(config)                 # this is for single run
+
+
+def generate_config_file(list_args):
+    # print('list_args: ', list_args)
+    config_path = list_args[3]
+    irace_config = home_path+"/swarm_aggregation/config/irace_config"+list_args[0]+'_'+list_args[1]+'_'+list_args[2]+".txt"
+    # print('list_args: ', list_args)
+    shutil.copyfile(config_path, irace_config)
+    # print(list_args[2:])
+    q_bits = list_args[4]
+
+    with open(irace_config, "a") as file:
+        q_bits_str = 'QUANTIZATION_BITS='+str(q_bits)
+        file.write(q_bits_str + '\n')
+
+    reshape_args = np.array(list_args[5:]).reshape(-1, 2)
+    for i in range(reshape_args.shape[0]//int(q_bits)):
+        idxs = np.arange(i, reshape_args.shape[0], 3)
+        values = np.take(reshape_args[:, 1], idxs)
+        param = ''
+        if 'r' in reshape_args[i, 0]:
+            param = 'CRW_FACTORS='
+        if 'a' in reshape_args[i, 0]:
+            param = 'LEVY_FACTORS='
+        if 'st' in reshape_args[i, 0]:
+            param = 'MAX_STRAIGHT_STEPS='
+
+        array_str = param+str(values).replace(' [', '').replace('[', '').replace(']', '').replace(' ', ',')\
+                                                                                         .replace("'", "")
+
+        with open(irace_config, "a") as file:
+            file.write(array_str + '\n')
+
+    return irace_config
 
 
 def run_processes(config: Configuration):

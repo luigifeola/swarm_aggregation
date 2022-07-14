@@ -1,3 +1,5 @@
+import math
+
 from helpers import random_walk as rw
 from random import random, choices, gauss
 from math import sin, cos, radians
@@ -12,7 +14,7 @@ class AgentAPI:
     def __init__(self, agent):
         self.speed = agent.speed
         self.radius = agent.radius
-        self.get_levy_turn_angle = agent.get_levy_turn_angle
+        self.get_turn_angle = agent.get_turn_angle
         self.reset_levy_counter = agent.reset_levy_counter
         self.get_mu = agent.noise_mu
         self.get_perceptible_gradient = agent.environment.get_perceptible_gradient()
@@ -46,8 +48,9 @@ class Agent:
 
         self.environment = environment
 
-        self.levy_weights = rw.get_levy_weights()
-        self.crw_weights = rw.get_crw_weights()
+        self.levy_factor = 2.0
+        self.std_motion_step = 10
+        self.crw_factor = 0.0
         self.max_levy_steps = 1000
 
         self.gradient = None
@@ -69,6 +72,7 @@ class Agent:
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
                f"alpha: {np.round(self.behavior.get_rw_factors()[1], 2)}\n" \
                f"lambda: {np.round(self.behavior.get_rw_factors()[2], 2)}\n" \
+               f"straight counter: {self.levy_counter}\n" \
                f"perceived gradient [0 - 1]: {self.gradient}\n" \
                f"real gradient [0 - 1]: {np.round(self.environment.sense_gradient(self), 2)}\n" \
                f"neighbors: {self.environment.sense_neighbors(self)}"
@@ -78,11 +82,12 @@ class Agent:
 
     def step(self):
         sensors = self.environment.get_sensors(self)
+
+        # set the walk parameters based on the sensed gradient
         self.behavior.step(sensors, AgentAPI(self))
 
-        [crw_factor, levy_factor, max_levy_steps] = self.behavior.get_rw_factors()
+        [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
 
-        self.update_rw_parameters(crw_factor, levy_factor, max_levy_steps)
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
         self.update_trace()
@@ -119,13 +124,8 @@ class Agent:
         self.levy_counter -= 1
 
         if self.levy_counter <= 0:
-            self.levy_counter = choices(range(1, self.max_levy_steps + 1), self.levy_weights)[0]
+            self.levy_counter = round(math.fabs(rw.levy_distribution(self.std_motion_step, self.levy_factor)))
 
-    def update_rw_parameters(self, crw_factor, levy_factor, max_levy_steps=1000):
-        thetas = np.arange(0, 360)
-        self.crw_weights = rw.crw_pdf(thetas, crw_factor)
-        self.levy_weights = rw.levy_pdf(max_levy_steps, levy_factor)
-        self.max_levy_steps = max_levy_steps
 
     def set_gradient(self, gradient):
         self.gradient = gradient
@@ -133,16 +133,15 @@ class Agent:
     def get_gradient(self):
         return self.gradient
 
-    def get_levy_turn_angle(self):
+    def get_turn_angle(self):
         angle = 0
         if self.levy_counter <= 1:
-            angle = choices(np.arange(0, 360), self.crw_weights)[0]
+            angle = math.fabs(rw.wrapped_cauchy_ppf(self.crw_factor))
         self.update_levy_counter()
         return angle
 
     def reset_levy_counter(self):
         self.levy_counter = 1
-        # self.get_levy_turn_angle()
 
     def get_tick(self):
         return self.tick
@@ -155,6 +154,7 @@ class Agent:
                                     self.pos[0] + self._radius,
                                     self.pos[1] + self._radius,
                                     fill=self.behavior.color,
+                                    # fill=outline_col,
                                     outline=outline_col,   # self.colors[self.behavior.state],
                                     width=4)
 
