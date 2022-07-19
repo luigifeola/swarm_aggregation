@@ -147,8 +147,8 @@ class Agent:
         return self.tick
 
     def draw(self, canvas, draw_trace_debug, draw_communication_debug):
-        grey_val = int(255 - self.gradient*255)
-        outline_col = rgb(grey_val, grey_val, grey_val,)
+        mid_val = int(255 - self.gradient*255)
+        outline_col = rgb(mid_val, mid_val, 0)
         circle = canvas.create_oval(self.pos[0] - self._radius,
                                     self.pos[1] - self._radius,
                                     self.pos[0] + self._radius,

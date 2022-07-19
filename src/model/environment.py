@@ -7,6 +7,7 @@ import igraph as ig
 from model.agent import Agent
 from model.behavior import DiffusiveBehavior, SocialBehavior
 from helpers import random_walk
+from bisect import bisect
 
 
 
@@ -32,6 +33,7 @@ class Environment:
         self.levy_params = levy_params
         self.max_straight_steps_params = max_straight_steps_params
         self.perceptible_gradient = None
+        self.perceptible_thresholds = None
         self.draw_trace_debug = draw_trace_debug
         self.draw_communication_range_debug = draw_communication_range_debug
         self.bool_noise = bool_noise
@@ -41,8 +43,8 @@ class Environment:
         self.create_robots()
         self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
-        self.background = self.create_environment()
         self.init_robot_parameters()
+        self.background = self.create_environment()
         self.sensed_gradient = 0
         self.metrics = ["cluster_number,cluster_metric"]
 
@@ -104,23 +106,49 @@ class Environment:
                           environment=self)
             self.population.append(robot)
 
+
+    def quantize_val(self, val):
+        if val < 255:
+            index = bisect(self.perceptible_thresholds, val / 255)
+            new_val = 255 * self.perceptible_gradient[index - 1]
+        else:
+            new_val = 255
+
+        return new_val
+
+
     def create_environment(self):
-        # background = Image.new('L', (self.width, self.height))
+        # Random center position
+        rand_x = randint(0, self.width)
+        rand_y = randint(0, self.height)
+        self.center_gradient = np.array([rand_x, rand_y])
+
         background = 255 * np.ones([self.width, self.height])
         outerColor = 255
         innerColor = 0
-        max_gradient_width = max(self.width - self.center_gradient[0], self.center_gradient[0])
-        max_gradient_height = max(self.height - self.center_gradient[1], self.center_gradient[1])
-        max_distance = max(max_gradient_width, max_gradient_height)
+
+        max_distance = randint(self.width // 3, self.width)
+        # max_distance = int(self.width//2)
+        print(max_distance)
         distances = matrix_index_distances(np.zeros((self.width, self.height)), index=self.center_gradient)
-        distances = distances / max_distance
+
         for y in range(0, self.height, 2):
             for x in range(0, self.width, 2):
-                # Find the distance to the center
+
+
                 distanceToCenter = distances[x, y]
-                gray = int(outerColor * distanceToCenter + innerColor * (1 - distanceToCenter))
-                if gray > 255:
-                    gray = 255
+                if distanceToCenter > max_distance:
+                    gray = outerColor
+                else:
+                    gray = int(outerColor * distanceToCenter / max_distance +
+                               innerColor * (1 - distanceToCenter / max_distance))
+                    if gray < 0:
+                        gray = 0
+                    if gray > outerColor:
+                        gray = outerColor
+                    gray = self.quantize_val(gray)
+
+
                 background[x, y] = gray
                 background[x+1, y] = gray
                 background[x, y+1] = gray
@@ -131,6 +159,7 @@ class Environment:
     def init_robot_parameters(self):
         random_walk.init_values(self.crw_params, self.levy_params, self.max_straight_steps_params)
         self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
+        self.perceptible_thresholds = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits+1), 2)
         # print('perceptible_gradient ', self.perceptible_gradient)
 
     def get_sensors(self, robot):
@@ -160,7 +189,7 @@ class Environment:
 
     def sense_gradient(self, robot):
         # return 255 - (255 * robot.pos[0]) // self.width
-        gradient_t = get_pixel_col(self.background, np.array(robot.pos).astype('int'))
+        gradient_t = get_pixel_col(self.background, np.array([robot.pos[1], robot.pos[0]]).astype('int'))
         return gradient_t
 
     def update_overall_gradient(self, gradient_t):
