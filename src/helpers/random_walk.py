@@ -7,7 +7,7 @@ import math
 # possible combination of values depending on the environment
 __crw_values = []
 __levy_values = []
-__max_straight_steps_values = []
+__std_motion_steps_values = []
 
 
 def exponential_distribution(lambda_):
@@ -52,15 +52,15 @@ def wrapped_cauchy_ppf(crw_exponent):
 
 
 # Here you initialize the different parameteres loaded from the config file
-def init_values(crw_params, levy_params, max_straight_steps_params):
-    global __crw_values, __levy_values, __max_straight_steps_values
+def init_values(crw_params, levy_params, std_motion_steps):
+    global __crw_values, __levy_values, __std_motion_steps_values
 
     __crw_values = np.array(crw_params, dtype=float)
     __levy_values = np.array(levy_params, dtype=float)
-    __max_straight_steps_values = np.array(max_straight_steps_params, dtype=int)
+    __std_motion_steps_values = np.array(std_motion_steps, dtype=int)
     # print('crw_values ', __crw_values)
     # print('levy_values ', __levy_values)
-    # print('max_levy_values ', __max_straight_steps_values)
+    # print('max_levy_values ', __std_motion_steps_values)
 
 
 def get_crw_values(i):
@@ -71,5 +71,5 @@ def get_levy_values(i):
     return __levy_values[i]
 
 
-def get_max_straight_steps_values(i):
-    return __max_straight_steps_values[i]
+def get_std_motion_steps_values(i):
+    return __std_motion_steps_values[i]

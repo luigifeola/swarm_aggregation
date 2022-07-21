@@ -31,12 +31,13 @@ def main():
                            config.parameters["FPS"])
     else:
         run(config)                 # this is for single run
+        os.remove(config_file)
 
 
 def generate_config_file(list_args):
     # print('list_args: ', list_args)
     config_path = list_args[3]
-    irace_config = home_path+"/swarm_aggregation/config/irace_config"+list_args[0]+'_'+list_args[1]+'_'+list_args[2]+".txt"
+    irace_config = home_path+"/swarm_aggregation/config/irace/irace_config"+list_args[0]+'_'+list_args[1]+'_'+list_args[2]+".txt"
     # print('list_args: ', list_args)
     shutil.copyfile(config_path, irace_config)
     # print(list_args[2:])
@@ -56,7 +57,7 @@ def generate_config_file(list_args):
         if 'a' in reshape_args[i, 0]:
             param = 'LEVY_FACTORS='
         if 'st' in reshape_args[i, 0]:
-            param = 'MAX_STRAIGHT_STEPS='
+            param = 'STD_MOTION_STEPS='
 
         array_str = param+str(values).replace(' [', '').replace('[', '').replace(']', '').replace(' ', ',')\
                                                                                          .replace("'", "")

@@ -14,7 +14,7 @@ from bisect import bisect
 class Environment:
 
     def __init__(self,
-                 crw_params, levy_params, max_straight_steps_params, quantization_bits=3,
+                 crw_params, levy_params, std_motion_steps, quantization_bits=3, reset_jump=1,
                  width=500, height=500,
                  center_gradient=[500//2, 500//2], diffusion_type='linear',
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
@@ -32,7 +32,8 @@ class Environment:
         self.quantization_bits = quantization_bits
         self.crw_params = crw_params
         self.levy_params = levy_params
-        self.max_straight_steps_params = max_straight_steps_params
+        self.std_motion_steps = std_motion_steps
+        self.reset_jump = bool(reset_jump)
         self.perceptible_gradient = None
         self.perceptible_thresholds = None
         self.draw_trace_debug = draw_trace_debug
@@ -101,7 +102,7 @@ class Environment:
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
-                          behavior=DiffusiveBehavior(),
+                          behavior=DiffusiveBehavior(self.reset_jump),
                           # TODO: find a better way to switch among behaviours
                           # behavior=SocialBehavior(),
                           environment=self)
@@ -166,7 +167,7 @@ class Environment:
         return background
 
     def init_robot_parameters(self):
-        random_walk.init_values(self.crw_params, self.levy_params, self.max_straight_steps_params)
+        random_walk.init_values(self.crw_params, self.levy_params, self.std_motion_steps)
         self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
         self.perceptible_thresholds = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits+1), 2)
         # print('perceptible_gradient ', self.perceptible_gradient)

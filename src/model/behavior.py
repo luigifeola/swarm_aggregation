@@ -67,8 +67,9 @@ class SocialBehavior(Behavior):
 
 class DiffusiveBehavior(Behavior):
 
-    def __init__(self):
+    def __init__(self, reset_jump):
         super().__init__()
+        self.reset_jump = reset_jump
 
 
     def step(self, sensors, api):
@@ -84,7 +85,7 @@ class DiffusiveBehavior(Behavior):
                     # print("api.get_gradient: ", api.get_gradient(), '\t', 'api.get_perceptible_gradient[i]: ', api.get_perceptible_gradient[i])
                     self.crw_factor = rw.get_crw_values(i)
                     self.levy_factor = rw.get_levy_values(i)
-                    self.std_motion_step = rw.get_max_straight_steps_values(i)
+                    self.std_motion_step = rw.get_std_motion_steps_values(i)
                     api.set_gradient(api.get_perceptible_gradient[i])
                     # api.reset_levy_counter()
                     # print("Perceived a different gradient")
@@ -94,16 +95,19 @@ class DiffusiveBehavior(Behavior):
         turn_angle = api.get_turn_angle()
         # self.dr = api.speed() * np.array([cos(radians(turn_angle)), sin(radians(turn_angle))])
         self.dr = api.speed() * np.array([cos(turn_angle), sin(turn_angle)])
-
+        wall_avoid = self.wall_avoidance(sensors)
         # TODO: maybe the stop/resuming walk after wall avoidance can be setted using a flag from config file
-        if self.wall_avoidance(sensors):
+        if self.reset_jump and wall_avoid:
             api.reset_levy_counter()
 
     def wall_avoidance(self, sensors):
+        colliding = False
         if (sensors["RIGHT"] and self.dr[1] <= 0) or (sensors["LEFT"] and self.dr[1] >= 0):
             self.dr[1] = -self.dr[1]
-            return True
+            colliding = True
         if (sensors["FRONT"] and self.dr[0] >= 0) or (sensors["BACK"] and self.dr[0] <= 0):
             self.dr[0] = -self.dr[0]
-            return True
-        return False
+            colliding = True
+
+        return colliding
+
