@@ -17,8 +17,11 @@ class Configuration:
     def add_to_parameters(self, parameter, value):
         float_params = {"ROBOT_SPEED", "NOISE_MU", "NOISE_MUSD",
                         "NOISE_SD", "COMMUNICATION_RADIUS"}
+        str_params = {"DIFFUSION_TYPE"}
         if parameter in float_params:
             self.parameters[parameter] = float(value)
+        elif parameter in str_params:
+            self.parameters[parameter] = value
         elif ',' in value:
             if '.' in value:
                 self.parameters[parameter] = [float(x) for x in value.split(",")]  # list(value.split(","))
@@ -35,6 +38,7 @@ class MainController:
         self.environment = Environment(width=self.config.parameters["WIDTH"],
                                        height=self.config.parameters["HEIGHT"],
                                        center_gradient=self.config.parameters["CENTER_GRADIENT"],
+                                       diffusion_type=self.config.parameters["DIFFUSION_TYPE"],
                                        nb_robots=self.config.parameters["NB_ROBOTS"],
                                        robot_speed=self.config.parameters["ROBOT_SPEED"],
                                        communication_radius=self.config.parameters["COMMUNICATION_RADIUS"],

@@ -16,7 +16,7 @@ class Environment:
     def __init__(self,
                  crw_params, levy_params, max_straight_steps_params, quantization_bits=3,
                  width=500, height=500,
-                 center_gradient=[500//2, 500//2],
+                 center_gradient=[500//2, 500//2], diffusion_type='linear',
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
                  draw_trace_debug=False, draw_communication_range_debug=False,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
@@ -24,6 +24,7 @@ class Environment:
         self.width = width
         self.height = height
         self.center_gradient = center_gradient
+        self.diffusion_type = diffusion_type
         self.nb_robots = nb_robots
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
@@ -108,13 +109,25 @@ class Environment:
 
 
     def quantize_val(self, val):
-        if val < 255:
-            index = bisect(self.perceptible_thresholds, val / 255)
-            new_val = 255 * self.perceptible_gradient[index - 1]
-        else:
-            new_val = 255
+        if val < 0:
+            val = 0
+        if val > 255:
+            val = 255
+        index = bisect(self.perceptible_thresholds[:-1], val / 255)
+        new_val = 255 * self.perceptible_gradient[index - 1]
 
         return new_val
+
+    @staticmethod
+    def quadratic_diffusion(k_val, distance):
+        distance = distance + 0.8 / k_val
+        return 255 - int(255 / (distance * k_val) ** 2)
+
+
+    @staticmethod
+    def linear_diffusion(max_distance, distance):
+        distance = distance / max_distance
+        return int(255 * distance + 0 * (1 - distance / max_distance))
 
 
     def create_environment(self):
@@ -122,33 +135,29 @@ class Environment:
         rand_x = randint(0, self.width)
         rand_y = randint(0, self.height)
         self.center_gradient = np.array([rand_x, rand_y])
+        # self.center_gradient = np.array([self.width//2, self.width//2])
 
         background = 255 * np.ones([self.width, self.height])
-        outerColor = 255
-        innerColor = 0
 
         max_distance = randint(self.width // 3, self.width)
-        # max_distance = int(self.width//2)
-        print(max_distance)
-        distances = matrix_index_distances(np.zeros((self.width, self.height)), index=self.center_gradient)
+        k_val = np.round(np.random.uniform(1 / (self.width/4), 1 / (self.width/2)), 6)
+
+        distances_from_center = matrix_index_distances(np.zeros((self.width, self.height)), index=self.center_gradient)
 
         for y in range(0, self.height, 2):
             for x in range(0, self.width, 2):
 
+                if self.diffusion_type == 'linear':
+                    gray = self.linear_diffusion(max_distance, distances_from_center[x, y])
 
-                distanceToCenter = distances[x, y]
-                if distanceToCenter > max_distance:
-                    gray = outerColor
+                elif self.diffusion_type == 'quadratic':
+                    gray = self.quadratic_diffusion(k_val, distances_from_center[x, y])
+
                 else:
-                    gray = int(outerColor * distanceToCenter / max_distance +
-                               innerColor * (1 - distanceToCenter / max_distance))
-                    if gray < 0:
-                        gray = 0
-                    if gray > outerColor:
-                        gray = outerColor
-                    gray = self.quantize_val(gray)
+                    print('Wrong diffusion type!!!')
+                    exit(-1)
 
-
+                gray = self.quantize_val(gray)
                 background[x, y] = gray
                 background[x+1, y] = gray
                 background[x, y+1] = gray
