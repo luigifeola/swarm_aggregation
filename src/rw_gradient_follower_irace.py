@@ -12,8 +12,8 @@ def main():
     random.seed(argv[1])
     config_file = generate_config_file(argv[1:])
     config = Configuration(config_file=config_file)
-    gradient = run(config)
     os.remove(config_file)
+    gradient = run(config)
     return gradient
 
 

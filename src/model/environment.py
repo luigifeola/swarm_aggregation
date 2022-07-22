@@ -16,7 +16,7 @@ class Environment:
     def __init__(self,
                  crw_params, levy_params, std_motion_steps, quantization_bits=3, reset_jump=1,
                  width=500, height=500,
-                 center_gradient=[500//2, 500//2], diffusion_type='linear',
+                 center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=0,
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
                  draw_trace_debug=False, draw_communication_range_debug=False,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
@@ -25,6 +25,7 @@ class Environment:
         self.height = height
         self.center_gradient = center_gradient
         self.diffusion_type = diffusion_type
+        self.fixed_extension = fixed_extension
         self.nb_robots = nb_robots
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
@@ -140,8 +141,13 @@ class Environment:
 
         background = 255 * np.ones([self.width, self.height])
 
-        max_distance = randint(self.width // 3, self.width)
-        k_val = np.round(np.random.uniform(1 / (self.width/4), 1 / (self.width/2)), 6)
+        if self.fixed_extension:
+            max_distance = self.width / 3 * 2
+            k_val = np.round(1 / (self.width / 2.5), 6)
+        else:
+            max_distance = randint(self.width // 3, self.width)
+            k_val = np.round(np.random.uniform(1 / (self.width/4), 1 / (self.width/2)), 6)
+
 
         distances_from_center = matrix_index_distances(np.zeros((self.width, self.height)), index=self.center_gradient)
 

@@ -48,6 +48,7 @@ class MainController:
                                        levy_params=self.config.parameters['LEVY_FACTORS'],
                                        std_motion_steps=self.config.parameters['STD_MOTION_STEPS'],
                                        reset_jump=self.config.parameters['RESET_JUMP'],
+                                       fixed_extension=self.config.parameters['FIXED_EXTENSION'],
                                        bool_noise=self.config.parameters["NOISE_FLAG"],
                                        noise_mu=self.config.parameters["NOISE_MU"],
                                        noise_musd=self.config.parameters["NOISE_MUSD"],
