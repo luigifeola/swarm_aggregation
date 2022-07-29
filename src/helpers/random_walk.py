@@ -1,8 +1,11 @@
 from math import cos, radians, pi
 import numpy as np
-import random
 import math
 
+
+import random
+from sys import argv
+random.seed(int(argv[1]))
 
 # possible combination of values depending on the environment
 __crw_values = []
@@ -11,13 +14,13 @@ __std_motion_steps_values = []
 
 
 def exponential_distribution(lambda_):
-    u = np.random.uniform(0.0, 1.0)
+    u = random.uniform(0.0, 1.0)
     x = -lambda_ * math.log(1 - u)
     return x
 
 
 def levy_distribution(std, alpha):
-    u = math.pi * (np.random.uniform(0.0, 1.0) - 0.5)
+    u = math.pi * (random.uniform(0.0, 1.0) - 0.5)
 
     # Cauchy case
     if alpha == 1.0:
@@ -42,10 +45,10 @@ def levy_distribution(std, alpha):
 
 def wrapped_cauchy_ppf(crw_exponent):
     if crw_exponent == 0:
-        return np.random.uniform(0.0, math.pi)
+        return random.uniform(0.0, math.pi)
 
     q = 0.5
-    u = np.random.uniform(0.0, 1.0)
+    u = random.uniform(0.0, 1.0)
     val = (1.0 - crw_exponent) / (1.0 + crw_exponent)
     theta = 2 * math.atan(val * math.tan(math.pi * (u - q)))
     return theta

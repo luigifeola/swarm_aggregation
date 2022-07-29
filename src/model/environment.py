@@ -1,14 +1,14 @@
 from math import cos, sin, radians
-from helpers.utils import norm, distance_between, matrix_index_distances, rgb, get_pixel_col
-from random import randint
+from helpers.utils import norm, distance_between, matrix_index_distances, get_pixel_col
+import random
 import numpy as np
 import igraph as ig
+
 
 from model.agent import Agent
 from model.behavior import DiffusiveBehavior, SocialBehavior
 from helpers import random_walk
 from bisect import bisect
-
 
 
 class Environment:
@@ -95,8 +95,8 @@ class Environment:
     def create_robots(self):
         for robot_id in range(self.nb_robots):
             robot = Agent(robot_id=robot_id,
-                          x=randint(self.robot_radius, self.width - 1 - self.robot_radius),
-                          y=randint(self.robot_radius, self.height - 1 - self.robot_radius),
+                          x=random.randint(self.robot_radius, self.width - 1 - self.robot_radius),
+                          y=random.randint(self.robot_radius, self.height - 1 - self.robot_radius),
                           speed=self.robot_speed,
                           radius=self.robot_radius,
                           bool_noise=self.bool_noise,
@@ -134,8 +134,8 @@ class Environment:
 
     def create_environment(self):
         # Random center position
-        rand_x = randint(0, self.width)
-        rand_y = randint(0, self.height)
+        rand_x = random.randint(0, self.width)
+        rand_y = random.randint(0, self.height)
         self.center_gradient = np.array([rand_x, rand_y])
         # self.center_gradient = np.array([self.width//2, self.width//2])
 
@@ -145,7 +145,7 @@ class Environment:
             max_distance = self.width / 3 * 2
             k_val = np.round(1 / (self.width / 2.5), 6)
         else:
-            max_distance = randint(self.width // 3, self.width)
+            max_distance = random.randint(self.width // 3, self.width)
             k_val = np.round(np.random.uniform(1 / (self.width/4), 1 / (self.width/2)), 6)
 
 

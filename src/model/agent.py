@@ -1,7 +1,7 @@
 import math
 
 from helpers import random_walk as rw
-from random import random, choices, gauss
+import random
 from math import sin, cos, radians
 from collections import deque
 
@@ -38,11 +38,11 @@ class Agent:
         self._speed = speed
         self.max_speed = speed
         self._radius = radius
-        self.orientation = random() * 360  # 360 degree angle
+        self.orientation = random.random() * 360  # 360 degree angle
 
         self.bool_noise = bool_noise
-        self.noise_mu = gauss(noise_mu, noise_musd)
-        if random() >= 0.5:
+        self.noise_mu = random.gauss(noise_mu, noise_musd)
+        if random.random() >= 0.5:
             self.noise_mu = -self.noise_mu
         self.noise_sd = noise_sd
 
@@ -101,7 +101,7 @@ class Agent:
     def move(self):
         wanted_movement = rotate(self.behavior.get_dr(), self.orientation)
         if self.bool_noise:
-            noise_angle = gauss(self.noise_mu, self.noise_sd)
+            noise_angle = random.gauss(self.noise_mu, self.noise_sd)
             noisy_movement = rotate(wanted_movement, noise_angle)
             self.orientation = get_orientation_from_vector(noisy_movement)
             self.pos = self.clamp_to_map(self.pos + noisy_movement)

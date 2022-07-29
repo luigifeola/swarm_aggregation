@@ -96,7 +96,6 @@ class DiffusiveBehavior(Behavior):
         # self.dr = api.speed() * np.array([cos(radians(turn_angle)), sin(radians(turn_angle))])
         self.dr = api.speed() * np.array([cos(turn_angle), sin(turn_angle)])
         wall_avoid = self.wall_avoidance(sensors)
-        # TODO: maybe the stop/resuming walk after wall avoidance can be setted using a flag from config file
         if self.reset_jump and wall_avoid:
             api.reset_levy_counter()
 

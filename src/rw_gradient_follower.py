@@ -37,20 +37,30 @@ def main():
 def generate_config_file(list_args):
     # print('list_args: ', list_args)
     config_path = list_args[3]
-    prefix = config_path.split('/')[-1].split('.')[0]
-    irace_config = home_path+"/swarm_aggregation/config/irace/"+prefix+list_args[0]+'_'+list_args[1]+'_'+list_args[2]+".txt"
+    irace_config = home_path+"/swarm_aggregation/config/irace/irace_config"+list_args[0]+'_'+list_args[1]+'_'+list_args[2]+".txt"
     # print('list_args: ', list_args)
     shutil.copyfile(config_path, irace_config)
     # print(list_args[2:])
     q_bits = list_args[4]
+    if 'std' in list_args[5]:
+        std = list_args[6]
+    else:
+        print(list_args[5], list_args[6])
+        print("Error no std_motion_steps defined")
+        exit(1)
 
     with open(irace_config, "a") as file:
-        q_bits_str = 'QUANTIZATION_BITS='+str(q_bits)
+        q_bits_str = 'QUANTIZATION_BITS='+q_bits
+        std_str = 'STD_MOTION_STEPS='
+        for i in range(int(q_bits)):
+            std_str += std + ','
         file.write(q_bits_str + '\n')
+        file.write(std_str[:-1] + '\n')
 
-    reshape_args = np.array(list_args[5:]).reshape(-1, 2)
-    for i in range(reshape_args.shape[0]//int(q_bits)):
-        idxs = np.arange(i, reshape_args.shape[0], 3)
+    reshape_args = np.array(list_args[7:]).reshape(-1, 2)
+    num_param = reshape_args.shape[0]//int(q_bits)
+    for i in range(num_param):
+        idxs = np.arange(i, reshape_args.shape[0], num_param)
         values = np.take(reshape_args[:, 1], idxs)
         param = ''
         if 'r' in reshape_args[i, 0]:
@@ -94,11 +104,14 @@ def run(config):
     # random.seed(argv[1])
     controller = MainController(config)
     controller.start_simulation()
-    filename = f"overall_gradient.txt"
+    gradientVAL_file = f"overall_gradient.txt"
+    gradientPOS_file = f"center_gradient_positions.txt"
     filepath = f"../data"
     os.makedirs(filepath, exist_ok=True)
-    with open(f"{filepath}/{filename}", "a") as file:
-        file.write(str(controller.get_overall_gradient())+'\n')
+    with open(f"{filepath}/{gradientVAL_file}", "a") as file:
+        file.write(f"{argv[1:]}: {controller.get_overall_gradient()}\n")
+    with open(f"{filepath}/{gradientPOS_file}", "a") as file:
+        file.write(f"{argv[1:]}: {controller.environment.center_gradient}\n")
     # print(f"Overall gradient for {config.parameters['NB_ROBOTS']} robots: "
     #       f"{controller.get_overall_gradient()}")
     print(f"{controller.get_overall_gradient()}")
