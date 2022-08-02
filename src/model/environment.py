@@ -81,10 +81,10 @@ class Environment:
         max_val = 0
         cluster_count = len(clusters)
         for cluster in clusters:
-            if len(cluster) > max_val:
-                max_val = len(cluster)
-            if len(cluster) == 1:
-                cluster_count -= 1
+            if(len(cluster) > max):
+                max = len(cluster)
+            # if(len(cluster)==1):
+            #     cluster_count -= 1
 
         # print("Largest cluster size = %d" % max)
         cluster_metric = max_val / pop_size
@@ -173,9 +173,11 @@ class Environment:
         return background
 
     def init_robot_parameters(self):
+
         random_walk.init_values(self.crw_params, self.levy_params, self.std_motion_steps)
         self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
         self.perceptible_thresholds = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits+1), 2)
+
         # print('perceptible_gradient ', self.perceptible_gradient)
 
     def get_sensors(self, robot):
