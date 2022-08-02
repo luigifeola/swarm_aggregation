@@ -5,7 +5,6 @@ from sys import argv
 import os
 import random
 
-
 def main():
     random.seed(argv[1])
     config = Configuration(config_file=argv[2])

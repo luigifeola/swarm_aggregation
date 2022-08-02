@@ -81,8 +81,8 @@ class Environment:
         max_val = 0
         cluster_count = len(clusters)
         for cluster in clusters:
-            if(len(cluster) > max):
-                max = len(cluster)
+            if(len(cluster) > max_val):
+                max_val = len(cluster)
             # if(len(cluster)==1):
             #     cluster_count -= 1
 
@@ -103,9 +103,9 @@ class Environment:
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
-                          behavior=DiffusiveBehavior(self.reset_jump),
+                          # behavior=DiffusiveBehavior(self.reset_jump),
                           # TODO: find a better way to switch among behaviours
-                          # behavior=SocialBehavior(),
+                          behavior=SocialBehavior(),
                           environment=self)
             self.population.append(robot)
 

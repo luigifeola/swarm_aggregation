@@ -40,7 +40,6 @@ class MainController:
                                        center_gradient=self.config.parameters["CENTER_GRADIENT"],
                                        diffusion_type=self.config.parameters["DIFFUSION_TYPE"],
                                        nb_robots=self.config.parameters["NB_ROBOTS"],
-                                       robot_behavior=self.config.parameters["BEHAVIOR"],
                                        robot_speed=self.config.parameters["ROBOT_SPEED"],
                                        communication_radius=self.config.parameters["COMMUNICATION_RADIUS"],
                                        robot_radius=self.config.parameters["ROBOT_RADIUS"],
