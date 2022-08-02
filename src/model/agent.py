@@ -1,29 +1,33 @@
+import math
+
 from helpers import random_walk as rw
-from random import random, choices, gauss
+import random
 from math import sin, cos, radians
 from collections import deque
 
-from model.behavior import State
 import numpy as np
 
-from helpers.utils import get_orientation_from_vector, rotate
+from helpers.utils import get_orientation_from_vector, rotate, rgb
 
 
 class AgentAPI:
     def __init__(self, agent):
         self.speed = agent.speed
         self.radius = agent.radius
-        self.get_levy_turn_angle = agent.get_levy_turn_angle
+        self.get_turn_angle = agent.get_turn_angle
         self.reset_levy_counter = agent.reset_levy_counter
         self.get_mu = agent.noise_mu
         self.get_perceptible_gradient = agent.environment.get_perceptible_gradient()
+        self.set_gradient = agent.set_gradient
+        self.get_gradient = agent.get_gradient
         self.get_tick = agent.get_tick
         self.pos = agent.pos
         self.set_speed = agent.set_speed
+        self.stop_exploration = agent.stop_exploration
+        self.resume_exploration = agent.resume_exploration
 
 
 class Agent:
-    colors = {State.EXPLORING: "black", State.INTENSE_LIGHT: "red", State.DARK_LIGHT: "white"}
 
     def __init__(self, robot_id, x, y, speed, radius,
                  bool_noise, noise_mu, noise_musd, noise_sd,
@@ -32,20 +36,24 @@ class Agent:
         self.id = robot_id
         self.pos = np.array([x, y]).astype('float64')
         self._speed = speed
+        self.max_speed = speed
         self._radius = radius
-        self.orientation = random() * 360  # 360 degree angle
+        self.orientation = random.random() * 360  # 360 degree angle
 
         self.bool_noise = bool_noise
-        self.noise_mu = gauss(noise_mu, noise_musd)
-        if random() >= 0.5:
+        self.noise_mu = random.gauss(noise_mu, noise_musd)
+        if random.random() >= 0.5:
             self.noise_mu = -self.noise_mu
         self.noise_sd = noise_sd
 
         self.environment = environment
 
-        self.levy_weights = rw.get_levy_weights()
-        self.crw_weights = rw.get_crw_weights()
+        self.levy_factor = 2.0
+        self.std_motion_step = 10
+        self.crw_factor = 0.0
         self.max_levy_steps = 1000
+
+        self.gradient = None
 
         self.levy_counter = 1
         self.trace = deque(self.pos, maxlen=100)
@@ -61,14 +69,12 @@ class Agent:
                f"position: {np.round(self.pos, 2)}\n" \
                f"angle: {np.round(self.orientation, 2)}\n" \
                f"dr: {self.behavior.get_dr()}\n" \
-               f"FRONT: {self.environment.get_sensors(self)['FRONT']}\n" \
-               f"BACK: {self.environment.get_sensors(self)['BACK']}\n" \
-               f"RIGHT: {self.environment.get_sensors(self)['RIGHT']}\n" \
-               f"LEFT: {self.environment.get_sensors(self)['LEFT']}\n" \
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
                f"alpha: {np.round(self.behavior.get_rw_factors()[1], 2)}\n" \
                f"lambda: {np.round(self.behavior.get_rw_factors()[2], 2)}\n" \
-               f"gradient [0 - 1]: {np.round(self.environment.sense_gradient(self), 2)}\n" \
+               f"straight counter: {self.levy_counter}\n" \
+               f"perceived gradient [0 - 1]: {self.gradient}\n" \
+               f"real gradient [0 - 1]: {np.round(self.environment.sense_gradient(self), 2)}\n" \
                f"neighbors: {self.environment.sense_neighbors(self)}"
 
     def __repr__(self):
@@ -76,15 +82,17 @@ class Agent:
 
     def step(self):
         sensors = self.environment.get_sensors(self)
+
+        # set the walk parameters based on the sensed gradient
         self.behavior.step(sensors, AgentAPI(self))
 
-        [crw_factor, levy_factor, max_levy_steps] = self.behavior.get_rw_factors()
+        [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
 
-        self.update_rw_parameters(crw_factor, levy_factor, max_levy_steps)
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
         self.update_trace()
         self.tick += 1
+        self.environment.update_overall_gradient(self.gradient)
 
     def update_trace(self):
         self.trace.appendleft(self.pos[1])
@@ -93,7 +101,7 @@ class Agent:
     def move(self):
         wanted_movement = rotate(self.behavior.get_dr(), self.orientation)
         if self.bool_noise:
-            noise_angle = gauss(self.noise_mu, self.noise_sd)
+            noise_angle = random.gauss(self.noise_mu, self.noise_sd)
             noisy_movement = rotate(wanted_movement, noise_angle)
             self.orientation = get_orientation_from_vector(noisy_movement)
             self.pos = self.clamp_to_map(self.pos + noisy_movement)
@@ -116,35 +124,38 @@ class Agent:
         self.levy_counter -= 1
 
         if self.levy_counter <= 0:
-            self.levy_counter = choices(range(1, self.max_levy_steps + 1), self.levy_weights)[0]
+            self.levy_counter = round(math.fabs(rw.levy_distribution(self.std_motion_step, self.levy_factor)))
 
-    def update_rw_parameters(self, crw_factor, levy_factor, max_levy_steps=1000):
-        thetas = np.arange(0, 360)
-        self.crw_weights = rw.crw_pdf(thetas, crw_factor)
-        self.levy_weights = rw.levy_pdf(max_levy_steps, levy_factor)
-        self.max_levy_steps = max_levy_steps
 
-    def get_levy_turn_angle(self):
+    def set_gradient(self, gradient):
+        self.gradient = gradient
+
+    def get_gradient(self):
+        return self.gradient
+
+    def get_turn_angle(self):
         angle = 0
         if self.levy_counter <= 1:
-            angle = choices(np.arange(0, 360), self.crw_weights)[0]
+            angle = math.fabs(rw.wrapped_cauchy_ppf(self.crw_factor))
         self.update_levy_counter()
         return angle
 
     def reset_levy_counter(self):
         self.levy_counter = 1
-        # self.get_levy_turn_angle()
 
     def get_tick(self):
         return self.tick
 
     def draw(self, canvas, draw_trace_debug, draw_communication_debug):
+        mid_val = int(255 - self.gradient*255)
+        outline_col = rgb(mid_val, mid_val, 0)
         circle = canvas.create_oval(self.pos[0] - self._radius,
                                     self.pos[1] - self._radius,
                                     self.pos[0] + self._radius,
                                     self.pos[1] + self._radius,
                                     fill=self.behavior.color,
-                                    outline=self.colors[self.behavior.state],
+                                    # fill=outline_col,
+                                    outline=outline_col,   # self.colors[self.behavior.state],
                                     width=4)
 
         self.draw_orientation(canvas)
@@ -175,6 +186,12 @@ class Agent:
 
     def set_speed(self, speed):
         self._speed = speed
+
+    def stop_exploration(self):
+        self._speed = 0
+
+    def resume_exploration(self):
+        self._speed = self.max_speed
 
     def radius(self):
         return self._radius

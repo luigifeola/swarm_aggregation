@@ -1,55 +1,59 @@
 from math import cos, sin, radians
-from PIL import ImageTk, Image
-from helpers.utils import norm, distance_between, matrix_index_distances, rgb, get_pixel_col
-from random import randint, random
+from helpers.utils import norm, distance_between, matrix_index_distances, get_pixel_col
+import random
 import numpy as np
 import igraph as ig
+
 
 from model.agent import Agent
 from model.behavior import DiffusiveBehavior, SocialBehavior
 from helpers import random_walk
-
-START_CRW_FACTOR = 0.9
-START_LEVY_FACTOR = 1.2
-START_MAX_STRAIGHT_STEP = 1000
+from bisect import bisect
 
 
 class Environment:
 
-    def __init__(self, width=500, height=500,
-                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25, quantization_bits=3,
-                 draw_trace_debug=True, draw_communication_range_debug=True,
-                 bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1, robot_behavior=1):
+    def __init__(self,
+                 crw_params, levy_params, std_motion_steps, quantization_bits=3, reset_jump=1,
+                 width=500, height=500,
+                 center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=0,
+                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
+                 draw_trace_debug=False, draw_communication_range_debug=False,
+                 bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
         self.population = list()
         self.width = width
         self.height = height
+        self.center_gradient = center_gradient
+        self.diffusion_type = diffusion_type
+        self.fixed_extension = fixed_extension
         self.nb_robots = nb_robots
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
         self.robot_communication_radius = communication_radius
         self.quantization_bits = quantization_bits
+        self.crw_params = crw_params
+        self.levy_params = levy_params
+        self.std_motion_steps = std_motion_steps
+        self.reset_jump = bool(reset_jump)
         self.perceptible_gradient = None
+        self.perceptible_thresholds = None
         self.draw_trace_debug = draw_trace_debug
         self.draw_communication_range_debug = draw_communication_range_debug
         self.bool_noise = bool_noise
         self.noise_mu = noise_mu
         self.noise_musd = noise_musd
         self.noise_sd = noise_sd
-        self.robot_behavior = robot_behavior
         self.create_robots()
         self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
-        self.background = self.create_environment()
         self.init_robot_parameters()
+        self.background = self.create_environment()
         self.sensed_gradient = 0
         self.metrics = ["cluster_number,cluster_metric"]
 
-    def load_images(self):
-        self.img = ImageTk.PhotoImage(file="../assets/field.png")
-
 
     def step(self):
-        #1. Compute neighbors
+        # 1. Compute neighbors
         pop_size = len(self.population)
         self.neighbors_table = [[] for i in range(pop_size)]
         for id1 in range(pop_size):
@@ -63,7 +67,7 @@ class Environment:
         for robot in self.population:
             robot.step()
 
-        #3. Compute metrics
+        # 3. Compute metrics
         total_distance = 0
         for robot1 in self.population:
             for robot2 in self.population:
@@ -74,7 +78,7 @@ class Environment:
 
         clusters = self.get_neighbors_graph().clusters()
         # print("Number of clusters = %d" % len(clusters))
-        max = 0
+        max_val = 0
         cluster_count = len(clusters)
         for cluster in clusters:
             if(len(cluster) > max):
@@ -83,54 +87,97 @@ class Environment:
             #     cluster_count -= 1
 
         # print("Largest cluster size = %d" % max)
-        cluster_metric = max/pop_size
+        cluster_metric = max_val / pop_size
         # print("Cluster metric = %f" % cluster_metric)
 
         self.metrics.append(str(cluster_count) + "," + str(cluster_metric))
 
-
     def create_robots(self):
         for robot_id in range(self.nb_robots):
             robot = Agent(robot_id=robot_id,
-                          x=randint(self.robot_radius, self.width - 1 - self.robot_radius),
-                          y=randint(self.robot_radius, self.height - 1 - self.robot_radius),
+                          x=random.randint(self.robot_radius, self.width - 1 - self.robot_radius),
+                          y=random.randint(self.robot_radius, self.height - 1 - self.robot_radius),
                           speed=self.robot_speed,
                           radius=self.robot_radius,
                           bool_noise=self.bool_noise,
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
-                          behavior=DiffusiveBehavior() if self.robot_behavior == 1 else SocialBehavior(),
+                          behavior=DiffusiveBehavior(self.reset_jump),
+                          # TODO: find a better way to switch among behaviours
+                          # behavior=SocialBehavior(),
                           environment=self)
             self.population.append(robot)
 
+
+    def quantize_val(self, val):
+        if val < 0:
+            val = 0
+        if val > 255:
+            val = 255
+        index = bisect(self.perceptible_thresholds[:-1], val / 255)
+        new_val = 255 * self.perceptible_gradient[index - 1]
+
+        return new_val
+
+    @staticmethod
+    def quadratic_diffusion(k_val, distance):
+        distance = distance + 0.8 / k_val
+        return 255 - int(255 / (distance * k_val) ** 2)
+
+
+    @staticmethod
+    def linear_diffusion(max_distance, distance):
+        distance = distance / max_distance
+        return int(255 * distance + 0 * (1 - distance / max_distance))
+
+
     def create_environment(self):
-        background = Image.new('L', (self.width, self.height))
-        outerColor = 255
-        innerColor = 0
-        center_gradient = np.array([randint(0, self.width), randint(0, self.height)])
-        # Make it on a scale from 0 to 1
-        max_gradient_width = max(self.width - center_gradient[0], center_gradient[0])
-        max_gradient_height = max(self.height - center_gradient[1], center_gradient[1])
-        max_distance = max(max_gradient_width, max_gradient_height)
-        distances = matrix_index_distances(np.zeros((self.width, self.height)), index=center_gradient)
-        distances = distances / max_distance
+        # Random center position
+        rand_x = random.randint(0, self.width)
+        rand_y = random.randint(0, self.height)
+        self.center_gradient = np.array([rand_x, rand_y])
+        # self.center_gradient = np.array([self.width//2, self.width//2])
+
+        background = 255 * np.ones([self.width, self.height])
+
+        if self.fixed_extension:
+            max_distance = self.width / 3 * 2
+            k_val = np.round(1 / (self.width / 2.5), 6)
+        else:
+            max_distance = random.randint(self.width // 3, self.width)
+            k_val = np.round(np.random.uniform(1 / (self.width/4), 1 / (self.width/2)), 6)
+
+
+        distances_from_center = matrix_index_distances(np.zeros((self.width, self.height)), index=self.center_gradient)
+
         for y in range(0, self.height, 2):
             for x in range(0, self.width, 2):
-                # Find the distance to the center
-                distanceToCenter = distances[x, y]
-                gray = int(outerColor * distanceToCenter + innerColor * (1 - distanceToCenter))
-                background.putpixel((x, y), gray)
-                background.putpixel((x + 1, y), gray)
-                background.putpixel((x, y + 1), gray)
-                background.putpixel((x + 1, y + 1), gray)
+
+                if self.diffusion_type == 'linear':
+                    gray = self.linear_diffusion(max_distance, distances_from_center[x, y])
+
+                elif self.diffusion_type == 'quadratic':
+                    gray = self.quadratic_diffusion(k_val, distances_from_center[x, y])
+
+                else:
+                    print('Wrong diffusion type!!!')
+                    exit(-1)
+
+                gray = self.quantize_val(gray)
+                background[x, y] = gray
+                background[x+1, y] = gray
+                background[x, y+1] = gray
+                background[x+1, y+1] = gray
 
         return background
 
     def init_robot_parameters(self):
-        random_walk.set_parameters(START_CRW_FACTOR, START_LEVY_FACTOR, START_MAX_STRAIGHT_STEP)
-        random_walk.init_values(self.quantization_bits)
-        self.perceptible_gradient = np.linspace(0.2, 1.0, num=self.quantization_bits)
+
+        random_walk.init_values(self.crw_params, self.levy_params, self.std_motion_steps)
+        self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
+        self.perceptible_thresholds = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits+1), 2)
+
         # print('perceptible_gradient ', self.perceptible_gradient)
 
     def get_sensors(self, robot):
@@ -160,9 +207,11 @@ class Environment:
 
     def sense_gradient(self, robot):
         # return 255 - (255 * robot.pos[0]) // self.width
-        gradient_t = get_pixel_col(self.background, robot.pos)
-        self.sensed_gradient += gradient_t
+        gradient_t = get_pixel_col(self.background, np.array([robot.pos[1], robot.pos[0]]).astype('int'))
         return gradient_t
+
+    def update_overall_gradient(self, gradient_t):
+        self.sensed_gradient += gradient_t
 
     def check_border_collision(self, robot, new_x, new_y):
         collide_x = False
@@ -182,9 +231,9 @@ class Environment:
         edges = []
         for i in range(len(self.neighbors_table)):
             for j in range(len(self.neighbors_table[i])):
-                edges.append((i,int(self.neighbors_table[i][j].id)))
+                edges.append((i, int(self.neighbors_table[i][j].id)))
 
-        graph = ig.Graph(edges= edges)
+        graph = ig.Graph(edges=edges)
         return graph
 
     def draw(self, canvas):
@@ -210,17 +259,7 @@ class Environment:
     def switch_draw_communication_range(self):
         self.draw_communication_range_debug = not self.draw_communication_range_debug
 
-    def draw_gradient_background(self, canvas):
-        # Iterate through the color and fill the rectangle with colors(r,g,0)
-        for x in range(0, self.width + 1):
-            r = 255 - (x * 255) // self.width
-            g = 255 - (x * 255) // self.width
-            # g = 255 if x < 128 else 255 - (x - 128) * 2
-            b = 255 - (x * 255) // self.width
-            # print(x, g)
-            # canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(0, g, 0), outline=rgb(0, g, 0))
-            canvas.create_rectangle(x, 0, self.width, self.height, fill=rgb(r, g, b), outline=rgb(r, g, b))
-
     def draw_background(self, canvas):
-        self.img = ImageTk.PhotoImage(self.background)
+        from PIL import ImageTk, Image
+        self.img = ImageTk.PhotoImage(Image.fromarray(np.uint8(self.background)))
         canvas.create_image(0, 0, image=self.img, anchor='nw')
