@@ -40,9 +40,19 @@ void CKilogrid::Init(TConfigurationNode &t_tree) {
     robot_positions.resize(kilobot_entities.size());
 
     Reset();
-
-    // outputFile.open("Results/results_non_informed.csv");
-
+    argos::LOG<<"Opening file"<<std::endl;
+    outputFile.open("robot_positions.csv");
+    argos::LOG<<"File opened ? "<<outputFile.is_open()<<std::endl;
+    outputFile<<"timeStep,";
+    for (size_t i = 0; i < kilobot_entities.size(); i++)
+    {
+      outputFile<<"robot_"<<i<<"_x,robot_"<<i<<"_y";
+      if(i != kilobot_entities.size() - 1)
+      {
+        outputFile<<",";
+      }
+    }
+    outputFile<<std::endl;
 }
 
 
@@ -80,7 +90,6 @@ void CKilogrid::Reset() {
 /*-----------------------------------------------------------------------------------------------*/
 void CKilogrid::Destroy() {
     // TODO implement what should happen if simulation quits
-
 }
 
 
@@ -146,13 +155,22 @@ void CKilogrid::PostStep(){
  //    argos::LOG << m_tKBs[i].second->angle_debug << std::endl;
  //
  // }
- // for(kilobot_entities_vector::iterator it = kilobot_entities.begin(); it != kilobot_entities.end(); it++)
- // {
- //     CKilobotEntity *entity = *it;
- //     CVector2 position = GetKilobotPosition(*entity);
- //     //TODO implement writing in file the positions
- // }
-
+ if(timeStep%10 == 0)
+ {
+   outputFile<<timeStep<<",";
+   for(kilobot_entities_vector::iterator it = kilobot_entities.begin(); it != kilobot_entities.end(); it++)
+   {
+       CKilobotEntity *entity = *it;
+       CVector2 position = GetKilobotPosition(*entity);
+       //TODO implement writing in file the positions
+       outputFile<<position.GetX()<<","<<position.GetY();
+       if(it != kilobot_entities.end() - 1)
+       {
+         outputFile<<",";
+       }
+   }
+   outputFile<<std::endl;
+ }
 }
 
 /*-----------------------------------------------------------------------------------------------*/
