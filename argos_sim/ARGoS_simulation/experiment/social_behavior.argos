@@ -90,7 +90,7 @@
     <distribute>
         <position method="uniform" min="0.12,0.12,0" max="0.88,0.88,0" />
         <orientation method="uniform" min="0,0,0" max="360,0,0" />
-        <entity quantity="50" max_trials="100">
+        <entity quantity="25" max_trials="100">
             <kilobot id="kbc">
                 <controller config="kbc"/>
                 <dynamics2d friction="0.7" />
@@ -125,7 +125,7 @@
 <!-- * Visualization  * -->
 <!-- ****************** -->
 
-<visualization>
+<!-- <visualization>
 <qt-opengl>
         <camera>
           <placements>
@@ -139,6 +139,6 @@
           </placements>
         </camera>
     </qt-opengl>
-</visualization>
+</visualization> -->
 
 </argos-configuration>

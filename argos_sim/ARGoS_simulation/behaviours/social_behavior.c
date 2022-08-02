@@ -36,7 +36,7 @@ int buffer_size = 25;
 struct broadcasting_robot_info broadcasting_robots[25];
 
 double alpha = 1;
-double beta = 0.5;
+double beta = 0.75;
 
 double crw_factor = 0; //between 0 and 1
 double levy_factor = 2; //between 0 and 2
@@ -251,7 +251,7 @@ void loop() {
       {
         timer_turn = 0;
         set_motors(kilo_straight_left, kilo_straight_right);
-        timer_go_straight = kilo_ticks + 32*4;
+        timer_go_straight = kilo_ticks + 32*10;
       }
       else if(timer_go_straight <= kilo_ticks && timer_turn == 0)
       {
