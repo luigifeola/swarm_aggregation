@@ -14,7 +14,7 @@ from bisect import bisect
 class Environment:
 
     def __init__(self,
-                 crw_params, levy_params, std_motion_steps, quantization_bits=3, reset_jump=1,
+                 crw_params, levy_params, std_motion_steps, neighbors_thresholds, quantization_bits=3, reset_jump=1,
                  width=500, height=500,
                  center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=0,
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
@@ -34,6 +34,7 @@ class Environment:
         self.crw_params = crw_params
         self.levy_params = levy_params
         self.std_motion_steps = std_motion_steps
+        self.neighbors_thresholds = neighbors_thresholds
         self.reset_jump = bool(reset_jump)
         self.perceptible_gradient = None
         self.perceptible_thresholds = None
@@ -83,8 +84,8 @@ class Environment:
         for cluster in clusters:
             if(len(cluster) > max_val):
                 max_val = len(cluster)
-            # if(len(cluster)==1):
-            #     cluster_count -= 1
+            if(len(cluster)<=1):
+                cluster_count -= 1
 
         # print("Largest cluster size = %d" % max)
         cluster_metric = max_val / pop_size
@@ -105,7 +106,7 @@ class Environment:
                           noise_sd=self.noise_sd,
                           # behavior=DiffusiveBehavior(self.reset_jump),
                           # TODO: find a better way to switch among behaviours
-                          behavior=SocialBehavior(),
+                          behavior=SocialBehavior(self.reset_jump),
                           environment=self)
             self.population.append(robot)
 
@@ -174,7 +175,7 @@ class Environment:
 
     def init_robot_parameters(self):
 
-        random_walk.init_values(self.crw_params, self.levy_params, self.std_motion_steps)
+        random_walk.init_values(self.crw_params, self.levy_params, self.std_motion_steps, self.neighbors_thresholds)
         self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
         self.perceptible_thresholds = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits+1), 2)
 

@@ -28,9 +28,10 @@ class Behavior(ABC):
 
 class SocialBehavior(Behavior):
 
-    def __init__(self):
+    def __init__(self, reset_jump):
         super().__init__()
         self.base_speed = 0
+        self.reset_jump = reset_jump
 
     def step(self, sensors, api):
         if self.base_speed == 0:
@@ -45,16 +46,28 @@ class SocialBehavior(Behavior):
         if(api.get_tick()%update_rate == 0):
             # get local number of neighbours here
             neighbors_nbr = len(sensor["NEIGHBORS"])
-            alpha = 1 #between 0 and 1
-            beta = 0.3 #between 0 and +inf
-            exp_factor = alpha * exp(-beta * neighbors_nbr)
 
-            #Implementation 1 : exp_factor directly influence the RW factors + speed
-            self.crw_factor = 0.9 * exp_factor
-            self.levy_factor = 2 - 0.8 * exp_factor
+            #Implementation with discretization and thresholds
+            index = 0
+            for threshold in rw.get_neighbors_thresholds_values():
+                if(neighbors_nbr >= threshold):
+                    index+=1
+
+            self.crw_factor = rw.get_crw_values(index)
+            self.levy_factor = rw.get_levy_values(index)
+
+            # alpha = 1 #between 0 and 1
+            # beta = 0.4 #between 0 and +inf
+            # exp_factor = alpha * exp(-beta * neighbors_nbr)
+            #
+            # #Implementation 1 : exp_factor directly influence the RW factors + speed
+            # self.crw_factor = 0.99 * exp_factor
+            # self.levy_factor = 2 - 1.2 * exp_factor
+            # if(self.levy_factor == 0): self.levy_factor = 0.01
+            # self.std_motion_step = 1
             #taking speed into account ?
 
-            api.set_speed(self.base_speed * exp_factor)
+            # api.set_speed(self.base_speed * exp_factor)
 
             #Implementation 2: exp_factor directly influence the RW factors + max_levy_steps
             # self.crw_factor = 0.9 * exp_factor
@@ -75,14 +88,20 @@ class SocialBehavior(Behavior):
 
     def update_movement_based_on_state(self, sensors, api):
         turn_angle = api.get_turn_angle()
-        self.dr = api.speed() * np.array([cos(radians(turn_angle)), sin(radians(turn_angle))])
-        self.wall_avoidance(sensors)
+        self.dr = api.speed() * np.array([cos(turn_angle), sin(turn_angle)])
+        if self.reset_jump and self.wall_avoidance(sensors):
+            api.reset_levy_counter()
 
     def wall_avoidance(self, sensors):
-        if (sensors["FRONT"] and self.dr[0] >= 0) or (sensors["BACK"] and self.dr[0] <= 0):
-            self.dr[0] = -self.dr[0]
+        colliding = False
         if (sensors["RIGHT"] and self.dr[1] <= 0) or (sensors["LEFT"] and self.dr[1] >= 0):
             self.dr[1] = -self.dr[1]
+            colliding = True
+        if (sensors["FRONT"] and self.dr[0] >= 0) or (sensors["BACK"] and self.dr[0] <= 0):
+            self.dr[0] = -self.dr[0]
+            colliding = True
+
+        return colliding
 
 
 class DiffusiveBehavior(Behavior):
@@ -129,4 +148,3 @@ class DiffusiveBehavior(Behavior):
             colliding = True
 
         return colliding
-
