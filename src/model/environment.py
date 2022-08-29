@@ -16,7 +16,7 @@ class Environment:
     def __init__(self,
                  crw_params, levy_params, std_motion_steps, quantization_bits=3, reset_jump=1,
                  width=500, height=500,
-                 center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=0,
+                 center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=1, fixed_position=1,
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
                  draw_trace_debug=False, draw_communication_range_debug=False,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
@@ -26,6 +26,7 @@ class Environment:
         self.center_gradient = center_gradient
         self.diffusion_type = diffusion_type
         self.fixed_extension = fixed_extension
+        self.fixed_position = fixed_position
         self.nb_robots = nb_robots
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
@@ -67,30 +68,30 @@ class Environment:
         for robot in self.population:
             robot.step()
 
-        # 3. Compute metrics
-        total_distance = 0
-        for robot1 in self.population:
-            for robot2 in self.population:
-                if robot1 != robot2:
-                    total_distance += distance_between(robot1, robot2)
-        total_distance = -total_distance
-        # print("Total distance = %s" % total_distance)
-
-        clusters = self.get_neighbors_graph().clusters()
-        # print("Number of clusters = %d" % len(clusters))
-        max_val = 0
-        cluster_count = len(clusters)
-        for cluster in clusters:
-            if(len(cluster) > max):
-                max = len(cluster)
-            # if(len(cluster)==1):
-            #     cluster_count -= 1
-
-        # print("Largest cluster size = %d" % max)
-        cluster_metric = max_val / pop_size
-        # print("Cluster metric = %f" % cluster_metric)
-
-        self.metrics.append(str(cluster_count) + "," + str(cluster_metric))
+        # # 3. Compute metrics
+        # total_distance = 0
+        # for robot1 in self.population:
+        #     for robot2 in self.population:
+        #         if robot1 != robot2:
+        #             total_distance += distance_between(robot1, robot2)
+        # total_distance = -total_distance
+        # # print("Total distance = %s" % total_distance)
+        #
+        # clusters = self.get_neighbors_graph().clusters()
+        # # print("Number of clusters = %d" % len(clusters))
+        # max_val = 0
+        # cluster_count = len(clusters)
+        # for cluster in clusters:
+        #     if len(cluster) > max:
+        #         max = len(cluster)
+        #     # if(len(cluster)==1):
+        #     #     cluster_count -= 1
+        #
+        # # print("Largest cluster size = %d" % max)
+        # cluster_metric = max_val / pop_size
+        # # print("Cluster metric = %f" % cluster_metric)
+        #
+        # self.metrics.append(str(cluster_count) + "," + str(cluster_metric))
 
     def create_robots(self):
         for robot_id in range(self.nb_robots):
@@ -134,16 +135,19 @@ class Environment:
 
     def create_environment(self):
         # Random center position
-        rand_x = random.randint(0, self.width)
-        rand_y = random.randint(0, self.height)
-        self.center_gradient = np.array([rand_x, rand_y])
-        # self.center_gradient = np.array([self.width//2, self.width//2])
+        if not self.fixed_position:
+            rand_x = random.randint(0, self.width)
+            rand_y = random.randint(0, self.height)
+            self.center_gradient = np.array([rand_x, rand_y])
+        else:
+            self.center_gradient = np.array([self.width // 2, self.width // 2])
+
 
         background = 255 * np.ones([self.width, self.height])
 
         if self.fixed_extension:
-            max_distance = self.width / 3 * 2
-            k_val = np.round(1 / (self.width / 2.5), 6)
+            max_distance = self.width // 2
+            k_val = np.round(1 / (self.width // 4), 6)
         else:
             max_distance = random.randint(self.width // 3, self.width)
             k_val = np.round(np.random.uniform(1 / (self.width/4), 1 / (self.width/2)), 6)

@@ -65,6 +65,7 @@ class ViewController:
                 self.fps_update_counter = 0
                 self.last_fps_check_time = time.time()
 
+
             self.root.update()
 
     def refresh(self):

@@ -47,6 +47,7 @@ def generate_config_file(list_args):
     else:
         print(list_args[5], list_args[6])
         print("Error no std_motion_steps defined")
+        std = ' '
         exit(1)
 
     with open(irace_config, "a") as file:
@@ -54,6 +55,7 @@ def generate_config_file(list_args):
         std_str = 'STD_MOTION_STEPS='
         for i in range(int(q_bits)):
             std_str += std + ','
+
         file.write(q_bits_str + '\n')
         file.write(std_str[:-1] + '\n')
 
