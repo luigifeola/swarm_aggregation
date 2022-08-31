@@ -178,7 +178,7 @@ class Environment:
 
     def init_robot_parameters(self):
 
-        random_walk.init_values(self.crw_params, self.levy_params, self.std_motion_steps)
+        random_walk.init_values(self.crw_params, self.levy_params, self.std_motion_steps, self.quantization_bits)
         self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
         self.perceptible_thresholds = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits+1), 2)
 

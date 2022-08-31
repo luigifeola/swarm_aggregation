@@ -8,9 +8,9 @@ from sys import argv
 random.seed(int(argv[1]))
 
 # possible combination of values depending on the environment
-__crw_values = []
-__levy_values = []
-__std_motion_steps_values = []
+__crw_values = np.array([])
+__levy_values = np.array([])
+__std_motion_steps_values = np.array([])
 
 
 def exponential_distribution(lambda_):
@@ -54,25 +54,38 @@ def wrapped_cauchy_ppf(crw_exponent):
     return theta
 
 
-# Here you initialize the different parameteres loaded from the config file
-def init_values(crw_params, levy_params, std_motion_steps):
+# Here you initialize the different parameters loaded from the config file
+def init_values(crw_params, levy_params, std_motion_steps, q_bits=-1):
     global __crw_values, __levy_values, __std_motion_steps_values
 
     __crw_values = np.array(crw_params, dtype=float)
     __levy_values = np.array(levy_params, dtype=float)
     __std_motion_steps_values = np.array(std_motion_steps, dtype=int)
+
+    if q_bits != -1:
+        __crw_values = __crw_values.reshape(q_bits, q_bits)
+        __levy_values = __levy_values.reshape(q_bits, q_bits)
+        __std_motion_steps_values = __std_motion_steps_values.reshape(q_bits, q_bits)
+
     # print('crw_values ', __crw_values)
     # print('levy_values ', __levy_values)
     # print('max_levy_values ', __std_motion_steps_values)
 
 
-def get_crw_values(i):
+def get_crw_values(i, f=-1):
+    if f != -1:
+        return __crw_values[i][f]
     return __crw_values[i]
 
 
-def get_levy_values(i):
+def get_levy_values(i, f=-1):
+    if f != -1:
+        return __levy_values[i][f]
     return __levy_values[i]
 
 
-def get_std_motion_steps_values(i):
+def get_std_motion_steps_values(i, f=-1):
+    if f != -1:
+        return __std_motion_steps_values[i][f]
     return __std_motion_steps_values[i]
+

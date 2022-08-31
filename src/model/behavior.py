@@ -90,25 +90,29 @@ class DiffusiveBehavior(Behavior):
     def __init__(self, reset_jump):
         super().__init__()
         self.reset_jump = reset_jump
+        self.gradient_memory = -1
 
 
     def step(self, sensors, api):
-        self.dr[0], self.dr[1] = 0, 0
         self.update_behavior(sensors, api)
 
     def update_behavior(self, sensor, api):
         quantization_intervals = np.round(np.linspace(0.0, 1.0, num=api.get_perceptible_gradient.size + 1), 2)[1:]
-        for i, q in enumerate(quantization_intervals):
+        for idx, q in enumerate(quantization_intervals):
             if sensor['GRADIENT'] <= q:
                 # print("sensor['GRADIENT']: ", sensor['GRADIENT'], '\t', 'val: ', q)
-                if api.get_gradient() != api.get_perceptible_gradient[i]:
-                    # print("api.get_gradient: ", api.get_gradient(), '\t', 'api.get_perceptible_gradient[i]: ', api.get_perceptible_gradient[i])
-                    self.crw_factor = rw.get_crw_values(i)
-                    self.levy_factor = rw.get_levy_values(i)
-                    self.std_motion_step = rw.get_std_motion_steps_values(i)
-                    api.set_gradient(api.get_perceptible_gradient[i])
-                    # api.reset_levy_counter()
-                    # print("Perceived a different gradient")
+
+                # print("api.get_gradient: ", api.get_gradient(), '\t', 'api.get_perceptible_gradient[i]: ', api.get_perceptible_gradient[i])
+                self.crw_factor = rw.get_crw_values(self.gradient_memory, idx)
+                self.levy_factor = rw.get_levy_values(self.gradient_memory, idx)
+                self.std_motion_step = rw.get_std_motion_steps_values(self.gradient_memory, idx)
+                api.set_gradient(api.get_perceptible_gradient[idx])
+                # api.reset_levy_counter()
+                # print("Perceived a different gradient")
+
+                self.gradient_memory = idx
+
+
                 break
 
     def update_movement_based_on_state(self, sensors, api):

@@ -6,6 +6,7 @@ import numpy as np
 import shutil
 
 home_path = os.path.expanduser('~')
+gradient_memory = True
 
 
 def main():
@@ -45,18 +46,21 @@ def generate_config_file(list_args):
     else:
         print(list_args[5], list_args[6])
         print("Error no std_motion_steps defined")
+        std = ' '
         exit(1)
 
     with open(irace_config, "a") as file:
         q_bits_str = 'QUANTIZATION_BITS='+q_bits
         std_str = 'STD_MOTION_STEPS='
-        for i in range(int(q_bits)):
+        _values = int(q_bits)*int(q_bits) if gradient_memory else int(q_bits)
+        for i in range(_values):
             std_str += std + ','
+
         file.write(q_bits_str + '\n')
         file.write(std_str[:-1] + '\n')
 
     reshape_args = np.array(list_args[7:]).reshape(-1, 2)
-    num_param = reshape_args.shape[0]//int(q_bits)
+    num_param = reshape_args.shape[0]//_values
     for i in range(num_param):
         idxs = np.arange(i, reshape_args.shape[0], num_param)
         values = np.take(reshape_args[:, 1], idxs)

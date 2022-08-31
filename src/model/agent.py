@@ -81,12 +81,8 @@ class Agent:
         return f"bot {self.id}"
 
     def step(self):
+
         sensors = self.environment.get_sensors(self)
-
-        # set the walk parameters based on the sensed gradient
-        self.behavior.step(sensors, AgentAPI(self))
-
-        [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
 
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
@@ -126,6 +122,13 @@ class Agent:
         if self.levy_counter <= 0:
             self.levy_counter = round(math.fabs(rw.levy_distribution(self.std_motion_step, self.levy_factor)))
 
+            sensors = self.environment.get_sensors(self)
+
+            # set the walk parameters based on the sensed gradient
+            self.behavior.step(sensors, AgentAPI(self))
+            [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
+
+
 
     def set_gradient(self, gradient):
         self.gradient = gradient
@@ -139,6 +142,7 @@ class Agent:
             angle = math.fabs(rw.wrapped_cauchy_ppf(self.crw_factor))
         self.update_levy_counter()
         return angle
+
 
     def reset_levy_counter(self):
         self.levy_counter = 1
