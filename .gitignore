@@ -6,7 +6,6 @@ results/
 argos_sim/ARGoS_simulation/data_generation_scripts/Results
 assets/
 checkered_canvas.py
-config/irace/
 fancy.png
 fancy2.png
 fancy3.png
@@ -20,6 +19,7 @@ half_time_lambda.png
 half_time_rho.png
 irace.Rdata
 irace_plots.py
+irace_plots
 jump_noJump_alpha.png
 jump_noJump_lambda.png
 jump_noJump_rho.png
@@ -33,4 +33,4 @@ temp.py
 with_xmin_10_-4.png
 with_xmin_10_-4_without_fit.png
 without_xmin.png
-
+config/irace/

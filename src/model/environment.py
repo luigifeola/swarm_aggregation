@@ -111,15 +111,17 @@ class Environment:
             self.population.append(robot)
 
 
-    def quantize_val(self, val):
+    def pixel_filter(self, val, quantize_pixel=False):
         if val < 0:
             val = 0
         if val > 255:
             val = 255
         index = bisect(self.perceptible_thresholds[:-1], val / 255)
-        new_val = 255 * self.perceptible_gradient[index - 1]
+        if quantize_pixel:
+            quantized_val = 255 * self.perceptible_gradient[index - 1]
+            return quantized_val
 
-        return new_val
+        return val
 
     @staticmethod
     def quadratic_diffusion(k_val, distance):
@@ -168,11 +170,17 @@ class Environment:
                     print('Wrong diffusion type!!!')
                     exit(-1)
 
-                gray = self.quantize_val(gray)
+                gray = self.pixel_filter(gray, False)
                 background[x, y] = gray
                 background[x+1, y] = gray
                 background[x, y+1] = gray
                 background[x+1, y+1] = gray
+
+        # print('background.shape: ', background.shape)
+        # print('background.shape: ', background.size)
+        # print('pixels val sum / num of pixels / 255: ', np.sum(background)/background.size/255)
+        # linear 2 ---> .7366902396514161
+        # quadratic 3 ---> .7684166448801742
 
         return background
 

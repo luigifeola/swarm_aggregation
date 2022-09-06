@@ -61,7 +61,8 @@ class MainController:
         if self.tick < self.config.parameters["SIMULATION_STEPS"]:
             self.tick += 1
             self.environment.step()
-            # print(f"Overall gradient {self.get_overall_gradient()}")
+            # if self.config.parameters["VISUALIZE"] != 0:
+            #     print(f"Overall gradient {self.get_overall_gradient()//self.config.parameters['NB_ROBOTS']//self.config.parameters['SIMULATION_STEPS']}")
 
 
     def start_simulation(self):
