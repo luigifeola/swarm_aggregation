@@ -1,6 +1,0 @@
-.idea
-__pycache__/
-*.pyc
-data/
-results/
-argos_sim/ARGoS_simulation/data_generation_scripts/Results
