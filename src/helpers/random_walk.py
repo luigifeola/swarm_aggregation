@@ -11,6 +11,7 @@ random.seed(int(argv[1]))
 __crw_values = []
 __levy_values = []
 __std_motion_steps_values = []
+__neighbors_thresholds_values = []
 
 
 def exponential_distribution(lambda_):
@@ -55,12 +56,13 @@ def wrapped_cauchy_ppf(crw_exponent):
 
 
 # Here you initialize the different parameteres loaded from the config file
-def init_values(crw_params, levy_params, std_motion_steps):
-    global __crw_values, __levy_values, __std_motion_steps_values
+def init_values(crw_params, levy_params, std_motion_steps, neighbors_thresholds):
+    global __crw_values, __levy_values, __std_motion_steps_values, __neighbors_thresholds_values
 
     __crw_values = np.array(crw_params, dtype=float)
     __levy_values = np.array(levy_params, dtype=float)
     __std_motion_steps_values = np.array(std_motion_steps, dtype=int)
+    __neighbors_thresholds_values = np.array(neighbors_thresholds, dtype=int)
     # print('crw_values ', __crw_values)
     # print('levy_values ', __levy_values)
     # print('max_levy_values ', __std_motion_steps_values)
@@ -76,3 +78,6 @@ def get_levy_values(i):
 
 def get_std_motion_steps_values(i):
     return __std_motion_steps_values[i]
+
+def get_neighbors_thresholds_values():
+    return __neighbors_thresholds_values

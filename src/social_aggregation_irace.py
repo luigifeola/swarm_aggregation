@@ -5,12 +5,6 @@ import random
 import numpy as np
 import shutil
 
-#best configs for 25 robots, 400x400, 10 000 steps, 300 exp
-# Best configurations as commandlines (first number is the configuration ID; same order as above):
-# 42  --t0 3 --t1 4 --a0 0.5593 --a1 1.5898 --a2 1.9601 --r0 0.6717 --r1 0.0101 --r2 0.0321
-# 40  --t0 2 --t1 4 --a0 0.6932 --a1 1.4339 --a2 1.7877 --r0 0.8699 --r1 0.3781 --r2 0.1053
-# 47  --t0 3 --t1 5 --a0 0.7697 --a1 1.835 --a2 1.9769 --r0 0.7645 --r1 0.4596 --r2 0.3857
-
 #best configs for 25 robots, 400x400, 3000 steps, 300 exp => less good results, culminate at 0.5 cluster metric
 # Best configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
 #    t0 t1     a0     a1     a2     r0     r1     r2

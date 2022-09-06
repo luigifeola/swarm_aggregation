@@ -53,7 +53,7 @@ class Agent:
         self.crw_factor = 0.0
         self.max_levy_steps = 1000
 
-        self.gradient = None
+        self.gradient = 0
 
         self.levy_counter = 1
         self.trace = deque(self.pos, maxlen=100)
