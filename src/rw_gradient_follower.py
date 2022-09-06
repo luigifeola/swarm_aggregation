@@ -22,8 +22,13 @@ gradient_memory = True
 
 def main():
     random.seed(argv[1])
-    config_file = generate_config_file(argv[1:])
-    config = Configuration(config_file=config_file)
+    if os.path.exists(argv[2]):
+        config_file = 'None'
+        config = Configuration(config_file=argv[2])
+    else:
+        config_file = generate_config_file(argv[1:])
+        config = Configuration(config_file=config_file)
+
     if config.parameters["VISUALIZE"] != 0:
         main_controller = MainController(config)
         _ = ViewController(main_controller,
@@ -37,7 +42,8 @@ def main():
         print(f"Overall gradient {overall_gradient}")
     else:
         run(config)  # this is for single run
-        os.remove(config_file)
+        if os.path.exists(config_file):
+            os.remove(config_file)
 
 
 def generate_config_file(list_args):
