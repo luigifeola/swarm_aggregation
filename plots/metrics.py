@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-results_size = 10
+results_size = 30
 results = []
 for i in range(results_size):
     df = pd.read_csv("../results/log" + str(i) + ".csv")

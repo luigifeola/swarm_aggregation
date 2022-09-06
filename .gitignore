@@ -4,3 +4,6 @@ __pycache__/
 data/
 results/
 argos_sim/ARGoS_simulation/data_generation_scripts/Results
+*.stderr
+*.stdout
+*.pdf
