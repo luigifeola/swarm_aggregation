@@ -39,6 +39,7 @@ class Agent:
         self.max_speed = speed
         self._radius = radius
         self.orientation = random.random() * 360  # 360 degree angle
+        self.turn_angle = 0
 
         self.bool_noise = bool_noise
         self.noise_mu = random.gauss(noise_mu, noise_musd)
@@ -67,6 +68,7 @@ class Agent:
         return f"ID: {self.id}\n" \
                f"drift: {round(self.noise_mu, 5)}\n" \
                f"position: {np.round(self.pos, 2)}\n" \
+               f"turning angle: {np.round(self.turn_angle, 2)}\n" \
                f"angle: {np.round(self.orientation, 2)}\n" \
                f"dr: {self.behavior.get_dr()}\n" \
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
@@ -81,12 +83,8 @@ class Agent:
         return f"bot {self.id}"
 
     def step(self):
+
         sensors = self.environment.get_sensors(self)
-
-        # set the walk parameters based on the sensed gradient
-        self.behavior.step(sensors, AgentAPI(self))
-
-        [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
 
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
@@ -126,6 +124,13 @@ class Agent:
         if self.levy_counter <= 0:
             self.levy_counter = round(math.fabs(rw.levy_distribution(self.std_motion_step, self.levy_factor)))
 
+            sensors = self.environment.get_sensors(self)
+
+            # set the walk parameters based on the sensed gradient
+            self.behavior.step(sensors, AgentAPI(self))
+            [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
+
+
 
     def set_gradient(self, gradient):
         self.gradient = gradient
@@ -137,8 +142,13 @@ class Agent:
         angle = 0
         if self.levy_counter <= 1:
             angle = math.fabs(rw.wrapped_cauchy_ppf(self.crw_factor))
+            if random.randint(0, 1):
+                angle = -1.0 * angle
         self.update_levy_counter()
-        return angle
+        self.turn_angle = angle
+
+        return self.turn_angle
+
 
     def reset_levy_counter(self):
         self.levy_counter = 1
