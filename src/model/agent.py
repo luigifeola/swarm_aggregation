@@ -39,6 +39,7 @@ class Agent:
         self.max_speed = speed
         self._radius = radius
         self.orientation = random.random() * 360  # 360 degree angle
+        self.turn_angle = 0
 
         self.bool_noise = bool_noise
         self.noise_mu = random.gauss(noise_mu, noise_musd)
@@ -137,8 +138,12 @@ class Agent:
         angle = 0
         if self.levy_counter <= 1:
             angle = math.fabs(rw.wrapped_cauchy_ppf(self.crw_factor))
+            if random.randint(0, 1):
+                angle = -1.0 * angle
         self.update_levy_counter()
-        return angle
+        self.turn_angle = angle
+
+        return self.turn_angle
 
     def reset_levy_counter(self):
         self.levy_counter = 1

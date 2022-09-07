@@ -42,49 +42,47 @@ class SocialBehavior(Behavior):
 
     def update_behavior(self, sensor, api):
 
-        update_rate = 20
-        if(api.get_tick()%update_rate == 0):
-            # get local number of neighbours here
-            neighbors_nbr = len(sensor["NEIGHBORS"])
+        # get local number of neighbours here
+        neighbors_nbr = len(sensor["NEIGHBORS"])
 
-            #Implementation with discretization and thresholds
-            index = 0
-            for threshold in rw.get_neighbors_thresholds_values():
-                if(neighbors_nbr >= threshold):
-                    index+=1
+        #Implementation with discretization and thresholds
+        index = 0
+        for threshold in rw.get_neighbors_thresholds_values():
+            if(neighbors_nbr >= threshold):
+                index+=1
 
-            self.crw_factor = rw.get_crw_values(index)
-            self.levy_factor = rw.get_levy_values(index)
+        self.crw_factor = rw.get_crw_values(index)
+        self.levy_factor = rw.get_levy_values(index)
 
-            # alpha = 1 #between 0 and 1
-            # beta = 0.4 #between 0 and +inf
-            # exp_factor = alpha * exp(-beta * neighbors_nbr)
-            #
-            # #Implementation 1 : exp_factor directly influence the RW factors + speed
-            # self.crw_factor = 0.99 * exp_factor
-            # self.levy_factor = 2 - 1.2 * exp_factor
-            # if(self.levy_factor == 0): self.levy_factor = 0.01
-            # self.std_motion_step = 1
-            #taking speed into account ?
+        # alpha = 1 #between 0 and 1
+        # beta = 0.4 #between 0 and +inf
+        # exp_factor = alpha * exp(-beta * neighbors_nbr)
+        #
+        # #Implementation 1 : exp_factor directly influence the RW factors + speed
+        # self.crw_factor = 0.99 * exp_factor
+        # self.levy_factor = 2 - 1.2 * exp_factor
+        # if(self.levy_factor == 0): self.levy_factor = 0.01
+        # self.std_motion_step = 1
+        #taking speed into account ?
 
-            # api.set_speed(self.base_speed * exp_factor)
+        # api.set_speed(self.base_speed * exp_factor)
 
-            #Implementation 2: exp_factor directly influence the RW factors + max_levy_steps
-            # self.crw_factor = 0.9 * exp_factor
-            # self.levy_factor = -0.8 * exp_factor + 2
-            # self.max_levy_steps = int(1000 * exp_factor)
-            # if(self.max_levy_steps == 0): self.max_levy_steps = 1
+        #Implementation 2: exp_factor directly influence the RW factors + max_levy_steps
+        # self.crw_factor = 0.9 * exp_factor
+        # self.levy_factor = -0.8 * exp_factor + 2
+        # self.max_levy_steps = int(1000 * exp_factor)
+        # if(self.max_levy_steps == 0): self.max_levy_steps = 1
 
-            #Implementation 3: exp_factor with probs
-            # random_number = np.random.uniform(0,1)
-            # if(random_number <= exp_factor):
-            #     self.crw_factor = 0.9
-            #     self.levy_factor = 1.2
-            #     api.set_speed(self.base_speed)
-            # else:
-            #     self.crw_factor = 0
-            #     self.levy_factor = 2
-            #     api.set_speed(self.base_speed * exp_factor)
+        #Implementation 3: exp_factor with probs
+        # random_number = np.random.uniform(0,1)
+        # if(random_number <= exp_factor):
+        #     self.crw_factor = 0.9
+        #     self.levy_factor = 1.2
+        #     api.set_speed(self.base_speed)
+        # else:
+        #     self.crw_factor = 0
+        #     self.levy_factor = 2
+        #     api.set_speed(self.base_speed * exp_factor)
 
     def update_movement_based_on_state(self, sensors, api):
         turn_angle = api.get_turn_angle()
