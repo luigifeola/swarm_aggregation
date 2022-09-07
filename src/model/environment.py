@@ -17,6 +17,7 @@ class Environment:
                  crw_params, levy_params, std_motion_steps, quantization_bits=3, reset_jump=1,
                  width=500, height=500,
                  center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=1, fixed_position=1,
+                 quantize_background=0,
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
                  draw_trace_debug=False, draw_communication_range_debug=False,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
@@ -27,6 +28,7 @@ class Environment:
         self.diffusion_type = diffusion_type
         self.fixed_extension = fixed_extension
         self.fixed_position = fixed_position
+        self.quantize_background = quantize_background
         self.nb_robots = nb_robots
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
@@ -48,7 +50,11 @@ class Environment:
         self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
         self.init_robot_parameters()
-        self.background = self.create_environment()
+        if quantize_background:
+            self.quantized_background = np.ones([self.width, self.height])
+        else:
+            self.quantized_background = None
+        self.background = self.create_environment(self.quantize_background)
         self.sensed_gradient = 0
         self.metrics = ["cluster_number,cluster_metric"]
 
@@ -111,17 +117,18 @@ class Environment:
             self.population.append(robot)
 
 
-    def pixel_filter(self, val, quantize_pixel=False):
+    @staticmethod
+    def pixel_filter(val):
         if val < 0:
             val = 0
         if val > 255:
             val = 255
-        index = bisect(self.perceptible_thresholds[:-1], val / 255)
-        if quantize_pixel:
-            quantized_val = 255 * self.perceptible_gradient[index - 1]
-            return quantized_val
-
         return val
+
+    def quantize_pixel(self, val):
+        index = bisect(self.perceptible_thresholds[:-1], val / 255)
+        quantized_val = 255 * self.perceptible_gradient[index - 1]
+        return quantized_val
 
     @staticmethod
     def quadratic_diffusion(k_val, distance):
@@ -135,7 +142,7 @@ class Environment:
         return int(255 * distance + 0 * (1 - distance / max_distance))
 
 
-    def create_environment(self):
+    def create_environment(self, q_background):
         # Random center position
         if not self.fixed_position:
             rand_x = random.randint(0, self.width)
@@ -170,7 +177,14 @@ class Environment:
                     print('Wrong diffusion type!!!')
                     exit(-1)
 
-                gray = self.pixel_filter(gray, False)
+                gray = self.pixel_filter(gray)
+                if self.quantize_background:
+                    quantized_gray = self.quantize_pixel(gray)
+                    self.quantized_background[x, y] = quantized_gray
+                    self.quantized_background[x + 1, y] = quantized_gray
+                    self.quantized_background[x, y + 1] = quantized_gray
+                    self.quantized_background[x + 1, y + 1] = quantized_gray
+
                 background[x, y] = gray
                 background[x+1, y] = gray
                 background[x, y+1] = gray
@@ -273,5 +287,8 @@ class Environment:
 
     def draw_background(self, canvas):
         from PIL import ImageTk, Image
-        self.img = ImageTk.PhotoImage(Image.fromarray(np.uint8(self.background)))
+        if self.quantized_background is None:
+            self.img = ImageTk.PhotoImage(Image.fromarray(np.uint8(self.background)))
+        else:
+            self.img = ImageTk.PhotoImage(Image.fromarray(np.uint8(self.quantized_background)))
         canvas.create_image(0, 0, image=self.img, anchor='nw')

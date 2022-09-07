@@ -18,7 +18,6 @@ def main():
     return gradient
 
 
-
 def run(config):
     controller = MainController(config)
     controller.start_simulation()
@@ -26,11 +25,15 @@ def run(config):
     gradientPOS_file = f"center_gradient_positions.txt"
     filepath = f"{home_path}/swarm_aggregation/data"
     os.makedirs(filepath, exist_ok=True)
+    overall_gradient = controller.get_overall_gradient() / \
+                       config.parameters['NB_ROBOTS'] / \
+                       config.parameters['SIMULATION_STEPS']
     with open(f"{filepath}/{gradientVAL_file}", "a") as file:
-        file.write(f"{argv[1:]}: {controller.get_overall_gradient()}\n")
+        file.write(f"{argv[1:]}: {overall_gradient}\n")
     with open(f"{filepath}/{gradientPOS_file}", "a") as file:
         file.write(f"{argv[1:]}: {controller.environment.center_gradient}\n")
-    return controller.get_overall_gradient()
+
+    return overall_gradient
 
 
 def generate_config_file(list_args):

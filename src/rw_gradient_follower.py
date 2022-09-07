@@ -23,9 +23,11 @@ gradient_memory = True
 def main():
     random.seed(argv[1])
     if os.path.exists(argv[2]):
+        # print("Config file exists")
         config_file = 'None'
         config = Configuration(config_file=argv[2])
     else:
+        # print("Config file NOT exists")
         config_file = generate_config_file(argv[1:])
         config = Configuration(config_file=config_file)
 
@@ -124,15 +126,15 @@ def run(config):
     gradientPOS_file = f"center_gradient_positions.txt"
     filepath = f"../data"
     os.makedirs(filepath, exist_ok=True)
+    overall_gradient = controller.get_overall_gradient() / \
+                       config.parameters['NB_ROBOTS'] / \
+                       config.parameters['SIMULATION_STEPS']
     with open(f"{filepath}/{gradientVAL_file}", "a") as file:
-        file.write(f"{argv[1:]}: {controller.get_overall_gradient()}\n")
+        file.write(f"{argv[1:]}: {overall_gradient}\n")
     with open(f"{filepath}/{gradientPOS_file}", "a") as file:
         file.write(f"{argv[1:]}: {controller.environment.center_gradient}\n")
     # print(f"Overall gradient for {config.parameters['NB_ROBOTS']} robots: "
     #       f"{controller.get_overall_gradient()}")
-    overall_gradient = controller.get_overall_gradient() / \
-                       config.parameters['NB_ROBOTS'] / \
-                       config.parameters['SIMULATION_STEPS']
     print(f"{overall_gradient}")
 
 
