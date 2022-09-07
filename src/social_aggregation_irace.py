@@ -5,6 +5,10 @@ import random
 import numpy as np
 import shutil
 
+#-------------------------------------------------------------------------------
+#WITH FIXED STD_MOTION_STEPS
+#-------------------------------------------------------------------------------
+
 #best configs for 25 robots, 400x400, 3000 steps, 300 exp => less good results, culminate at 0.5 cluster metric
 # Best configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
 #    t0 t1     a0     a1     a2     r0     r1     r2
@@ -41,6 +45,9 @@ import shutil
 # 1147  4  6 0.5140 1.8304 1.9348 0.8867 0.5776 0.0974
 # 1010  3  7 0.6370 1.5181 1.9852 0.9187 0.6515 0.0594
 
+#-------------------------------------------------------------------------------
+#WITH VARIABLE STD_MOTION_STEPS
+#-------------------------------------------------------------------------------
 
 def main():
     random.seed(argv[1])
@@ -63,7 +70,11 @@ def generate_config_file(list_args):
     # print('list_args: ', list_args)
     shutil.copyfile(config_path, irace_config)
 
-    array_str = "NEIGHBORS_THRESHOLDS=" + list_args[3] + "," + list_args[5] + "\n" + "LEVY_FACTORS=" + list_args[7] + "," + list_args[9] + "," + list_args[11] + "\n" + "CRW_FACTORS=" + list_args[13] + "," + list_args[15] + "," + list_args[17]
+    #line to uncomment if we want fixed STD_MOTION_STEPS
+    # array_str = "NEIGHBORS_THRESHOLDS=" + list_args[3] + "," + list_args[5] + "\n" + "LEVY_FACTORS=" + list_args[7] + "," + list_args[9] + "," + list_args[11] + "\n" + "CRW_FACTORS=" + list_args[13] + "," + list_args[15] + "," + list_args[17]
+    #line to uncomment if we want variable STD_MOTION_STEPS
+    array_str = "NEIGHBORS_THRESHOLDS=" + list_args[3] + "," + list_args[5] + "\n" + "LEVY_FACTORS=" + list_args[7] + "," + list_args[9] + "," + list_args[11] + "\n" + "CRW_FACTORS=" + list_args[13] + "," + list_args[15] + "," + list_args[17] + "\n" + "STD_MOTION_STEPS=" + list_args[19] + "," + list_args[21] + "," + list_args[23]
+
     with open(irace_config, "a") as file:
         file.write(array_str + '\n')
 
