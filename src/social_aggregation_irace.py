@@ -73,7 +73,9 @@ def generate_config_file(list_args):
     #line to uncomment if we want fixed STD_MOTION_STEPS
     # array_str = "NEIGHBORS_THRESHOLDS=" + list_args[3] + "," + list_args[5] + "\n" + "LEVY_FACTORS=" + list_args[7] + "," + list_args[9] + "," + list_args[11] + "\n" + "CRW_FACTORS=" + list_args[13] + "," + list_args[15] + "," + list_args[17]
     #line to uncomment if we want variable STD_MOTION_STEPS
-    array_str = "NEIGHBORS_THRESHOLDS=" + list_args[3] + "," + list_args[5] + "\n" + "LEVY_FACTORS=" + list_args[7] + "," + list_args[9] + "," + list_args[11] + "\n" + "CRW_FACTORS=" + list_args[13] + "," + list_args[15] + "," + list_args[17] + "\n" + "STD_MOTION_STEPS=" + list_args[19] + "," + list_args[21] + "," + list_args[23]
+    #array_str = "NEIGHBORS_THRESHOLDS=" + list_args[3] + "," + list_args[5] + "\n" + "LEVY_FACTORS=" + list_args[7] + "," + list_args[9] + "," + list_args[11] + "\n" + "CRW_FACTORS=" + list_args[13] + "," + list_args[15] + "," + list_args[17] + "\n" + "STD_MOTION_STEPS=" + list_args[19] + "," + list_args[21] + "," + list_args[23]
+    #line to uncomment with no STD_MOTION_STEPS and only 2 thresholds 2 types of RW
+    array_str = "NEIGHBORS_THRESHOLDS=" + list_args[3] + "," + list_args[5] + "\n" + "LEVY_FACTORS=" + list_args[7] + "," + list_args[9]  + "\n" + "CRW_FACTORS=" + list_args[11] + "," + list_args[13]
 
     with open(irace_config, "a") as file:
         file.write(array_str + '\n')

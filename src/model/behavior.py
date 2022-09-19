@@ -47,13 +47,23 @@ class SocialBehavior(Behavior):
 
         #Implementation with discretization and thresholds
         index = 0
-        for threshold in rw.get_neighbors_thresholds_values():
-            if(neighbors_nbr >= threshold):
-                index+=1
+        # for threshold in rw.get_neighbors_thresholds_values():
+        #     if(neighbors_nbr >= threshold):
+        #         index+=1
+        if(index == 0):
+            self.crw_factor = rw.get_crw_values(index)
+            self.levy_factor = rw.get_levy_values(index)
+            if(neighbors_nbr >= rw.get_neighbors_thresholds_values()[0]):
+                index = 1
+        elif(index == 1):
+            self.crw_factor = rw.get_crw_values(index)
+            self.levy_factor = rw.get_levy_values(index)
+            if(neighbors_nbr >= rw.get_neighbors_thresholds_values()[1]):
+                index = 0
 
-        self.crw_factor = rw.get_crw_values(index)
-        self.levy_factor = rw.get_levy_values(index)
-        self.std_motion_step = rw.get_std_motion_steps_values(index)
+        # self.crw_factor = rw.get_crw_values(index)
+        # self.levy_factor = rw.get_levy_values(index)
+        # self.std_motion_step = rw.get_std_motion_steps_values(index)
 
 
     def update_movement_based_on_state(self, sensors, api):
