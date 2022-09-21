@@ -35,3 +35,6 @@ with_xmin_10_-4_without_fit.png
 without_xmin.png
 config/irace/
 config/exploitation_*
+.ipynb_checkpoints/
+gradient_results.ipynb
+

@@ -44,10 +44,16 @@ def main():
                             config.parameters['NB_ROBOTS'] / \
                             config.parameters['SIMULATION_STEPS']
         print(f"Overall gradient {overall_gradient}")
+
     else:
-        run(config)  # this is for single run
-        if os.path.exists(config_file):
-            os.remove(config_file)
+        if config.parameters["NB_RUNS"] > 1:
+            print(f"Running {config.parameters['NB_RUNS']} runs")
+            run_processes(config)
+        else:
+            run(config)  # this is for single run
+            if os.path.exists(config_file):
+                os.remove(config_file)
+
 
 
 def generate_config_file(list_args):
@@ -121,7 +127,6 @@ def run_processes(config: Configuration):
 
 
 def run(config):
-    # random.seed(argv[1])
     controller = MainController(config)
     controller.start_simulation()
     gradientVAL_file = f"overall_gradient.txt"
@@ -132,9 +137,11 @@ def run(config):
                        config.parameters['NB_ROBOTS'] / \
                        config.parameters['SIMULATION_STEPS']
     with open(f"{filepath}/{gradientVAL_file}", "a") as file:
-        file.write(f"{argv[1:]}: {overall_gradient}\n")
+        # print(f"Writing on file: {filepath}/{gradientVAL_file}")
+        file.write(f"{overall_gradient}\n")
     with open(f"{filepath}/{gradientPOS_file}", "a") as file:
-        file.write(f"{argv[1:]}: {controller.environment.center_gradient}\n")
+        # print(f"Writing on file: {filepath}/{gradientPOS_file}")
+        file.write(f"{controller.environment.center_gradient}\n")
     # print(f"Overall gradient for {config.parameters['NB_ROBOTS']} robots: "
     #       f"{controller.get_overall_gradient()}")
     print(f"{overall_gradient}")

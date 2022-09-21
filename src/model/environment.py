@@ -193,8 +193,9 @@ class Environment:
         # print('background.shape: ', background.shape)
         # print('background.shape: ', background.size)
         # print('pixels val sum / num of pixels / 255: ', np.sum(background)/background.size/255)
-        # linear 2 ---> .7366902396514161
+        # linear ---> .7366902396514161
         # quadratic 3 ---> .7684166448801742
+
 
         return background
 
