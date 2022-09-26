@@ -32,7 +32,7 @@ class SocialBehavior(Behavior):
         super().__init__()
         self.base_speed = 0
         self.reset_jump = reset_jump
-	    self.index = 0
+        self.index = 0
 
     def step(self, sensors, api):
         if self.base_speed == 0:
