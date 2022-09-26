@@ -32,6 +32,7 @@ class SocialBehavior(Behavior):
         super().__init__()
         self.base_speed = 0
         self.reset_jump = reset_jump
+	self.index = 0
 
     def step(self, sensors, api):
         if self.base_speed == 0:
@@ -46,20 +47,20 @@ class SocialBehavior(Behavior):
         neighbors_nbr = len(sensor["NEIGHBORS"])
 
         #Implementation with discretization and thresholds
-        index = 0
+        #index = 0
         # for threshold in rw.get_neighbors_thresholds_values():
         #     if(neighbors_nbr >= threshold):
         #         index+=1
-        if(index == 0):
+        if(self.index == 0):
             self.crw_factor = rw.get_crw_values(index)
             self.levy_factor = rw.get_levy_values(index)
             if(neighbors_nbr >= rw.get_neighbors_thresholds_values()[0]):
-                index = 1
-        elif(index == 1):
+                self.index = 1
+        elif(self.index == 1):
             self.crw_factor = rw.get_crw_values(index)
             self.levy_factor = rw.get_levy_values(index)
-            if(neighbors_nbr >= rw.get_neighbors_thresholds_values()[1]):
-                index = 0
+            if(neighbors_nbr <= rw.get_neighbors_thresholds_values()[1]):
+                self.index = 0
 
         # self.crw_factor = rw.get_crw_values(index)
         # self.levy_factor = rw.get_levy_values(index)
