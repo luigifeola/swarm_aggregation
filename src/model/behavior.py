@@ -52,13 +52,13 @@ class SocialBehavior(Behavior):
         #     if(neighbors_nbr >= threshold):
         #         index+=1
         if(self.index == 0):
-            self.crw_factor = rw.get_crw_values(index)
-            self.levy_factor = rw.get_levy_values(index)
+            self.crw_factor = rw.get_crw_values(self.index)
+            self.levy_factor = rw.get_levy_values(self.index)
             if(neighbors_nbr >= rw.get_neighbors_thresholds_values()[0]):
                 self.index = 1
         elif(self.index == 1):
-            self.crw_factor = rw.get_crw_values(index)
-            self.levy_factor = rw.get_levy_values(index)
+            self.crw_factor = rw.get_crw_values(self.index)
+            self.levy_factor = rw.get_levy_values(self.index)
             if(neighbors_nbr <= rw.get_neighbors_thresholds_values()[1]):
                 self.index = 0
 
