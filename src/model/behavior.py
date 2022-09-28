@@ -98,18 +98,25 @@ class DiffusiveBehavior(Behavior):
 
     def update_behavior(self, sensor, api):
         quantization_intervals = np.round(np.linspace(0.0, 1.0, num=api.get_perceptible_gradient.size + 1), 2)[1:]
-        for i, q in enumerate(quantization_intervals):
-            if sensor['GRADIENT'] <= q:
-                # print("sensor['GRADIENT']: ", sensor['GRADIENT'], '\t', 'val: ', q)
-                if api.get_gradient() != api.get_perceptible_gradient[i]:
-                    # print("api.get_gradient: ", api.get_gradient(), '\t', 'api.get_perceptible_gradient[i]: ', api.get_perceptible_gradient[i])
-                    self.crw_factor = rw.get_crw_values(i)
-                    self.levy_factor = rw.get_levy_values(i)
-                    self.std_motion_step = rw.get_std_motion_steps_values(i)
-                    api.set_gradient(api.get_perceptible_gradient[i])
-                    # api.reset_levy_counter()
-                    # print("Perceived a different gradient")
-                break
+        # print(f"sensor['GRADIENT']: {sensor['GRADIENT']}")
+        idx = np.digitize(sensor['GRADIENT'], quantization_intervals, right=True)
+        self.crw_factor = rw.get_crw_values(idx)
+        self.levy_factor = rw.get_levy_values(idx)
+        self.std_motion_step = rw.get_std_motion_steps_values(idx)
+        api.set_gradient(api.get_perceptible_gradient[idx])
+        #
+        # for i, q in enumerate(quantization_intervals):
+        #     if sensor['GRADIENT'] <= q:
+        #         # print("sensor['GRADIENT']: ", sensor['GRADIENT'], '\t', 'val: ', q)
+        #         if api.get_gradient() != api.get_perceptible_gradient[i]:
+        #             # print("api.get_gradient: ", api.get_gradient(), '\t', 'api.get_perceptible_gradient[i]: ', api.get_perceptible_gradient[i])
+        #             self.crw_factor = rw.get_crw_values(i)
+        #             self.levy_factor = rw.get_levy_values(i)
+        #             self.std_motion_step = rw.get_std_motion_steps_values(i)
+        #             api.set_gradient(api.get_perceptible_gradient[i])
+        #             # api.reset_levy_counter()
+        #             # print("Perceived a different gradient")
+        #         break
 
     def update_movement_based_on_state(self, sensors, api):
         turn_angle = api.get_turn_angle()

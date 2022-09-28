@@ -40,5 +40,6 @@ def rgb(r, g, b):
 
 def get_pixel_col(np_img, pixel):
     return np_img[pixel[0], pixel[1]] / 255
+    # return round(np_img[pixel[0], pixel[1]] / 255, 4)
 
 

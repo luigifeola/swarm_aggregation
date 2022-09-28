@@ -90,7 +90,7 @@ class Agent:
         self.move()
         self.update_trace()
         self.tick += 1
-        self.environment.update_overall_gradient(self.gradient)
+        self.environment.update_overall_gradient(np.round(self.environment.sense_gradient(self), 4))
 
     def update_trace(self):
         self.trace.appendleft(self.pos[1])

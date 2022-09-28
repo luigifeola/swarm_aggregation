@@ -1,3 +1,4 @@
+import os
 from math import cos, sin, radians
 from helpers.utils import norm, distance_between, matrix_index_distances, get_pixel_col
 import random
@@ -57,6 +58,11 @@ class Environment:
         self.background = self.create_environment(self.quantize_background)
         self.sensed_gradient = 0
         self.metrics = ["cluster_number,cluster_metric"]
+        self.filepath = f"../data"
+        self.robotPosFile = f"%5d_robotPos.txt" % (random.randint(0, 9999))
+        self.make_logFiles()
+        self.tick = 0
+
 
 
     def step(self):
@@ -69,11 +75,23 @@ class Environment:
                     self.neighbors_table[id1].append(self.population[id2])
                     self.neighbors_table[id2].append(self.population[id1])
 
-        # print(self.neighbors_table)
-        # 2. Move
+        # you should get the timestep from the main controller
+        # with open(f"{self.filepath}/{self.robotPosFile}", "a") as file:
+        #     file.write(f"{}\t")
+        with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
+            file.write(f"{self.tick}\t")
         for robot in self.population:
+            r_pos = np.around(robot.pos, decimals=3)
+            with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
+                file.write(f"{r_pos[0]}\t"
+                           f"{r_pos[1]}\t")
+
             robot.step()
 
+        with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
+            file.write(f"\n")
+
+        self.tick += 1
         # # 3. Compute metrics
         # total_distance = 0
         # for robot1 in self.population:
@@ -99,6 +117,7 @@ class Environment:
         #
         # self.metrics.append(str(cluster_count) + "," + str(cluster_metric))
 
+
     def create_robots(self):
         for robot_id in range(self.nb_robots):
             robot = Agent(robot_id=robot_id,
@@ -115,6 +134,10 @@ class Environment:
                           # behavior=SocialBehavior(),
                           environment=self)
             self.population.append(robot)
+
+
+    def make_logFiles(self):
+        os.makedirs(self.filepath, exist_ok=True)
 
 
     @staticmethod
@@ -238,6 +261,7 @@ class Environment:
         return gradient_t
 
     def update_overall_gradient(self, gradient_t):
+        # print(gradient_t)
         self.sensed_gradient += gradient_t
 
     def check_border_collision(self, robot, new_x, new_y):
