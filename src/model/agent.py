@@ -18,8 +18,13 @@ class AgentAPI:
         self.reset_levy_counter = agent.reset_levy_counter
         self.get_mu = agent.noise_mu
         self.get_perceptible_gradient = agent.environment.get_perceptible_gradient()
+
         self.set_gradient = agent.set_gradient
         self.get_gradient = agent.get_gradient
+
+        self.get_previous_bin = agent.get_previous_bin
+        self.set_previous_bin = agent.set_previous_bin
+
         self.get_tick = agent.get_tick
         self.pos = agent.pos
         self.set_speed = agent.set_speed
@@ -55,6 +60,7 @@ class Agent:
         self.max_levy_steps = 1000
 
         self.gradient = None
+        self.previous_bin = -1
 
         self.levy_counter = 1
         self.trace = deque(self.pos, maxlen=100)
@@ -85,6 +91,8 @@ class Agent:
     def step(self):
 
         sensors = self.environment.get_sensors(self)
+        # set the walk parameters based on the sensed gradient
+        self.behavior.step(sensors, AgentAPI(self))
 
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
@@ -120,17 +128,17 @@ class Agent:
 
     def update_levy_counter(self):
         self.levy_counter -= 1
+        [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
 
         if self.levy_counter <= 0:
             self.levy_counter = round(math.fabs(rw.levy_distribution(self.std_motion_step, self.levy_factor)))
 
-            sensors = self.environment.get_sensors(self)
 
-            # set the walk parameters based on the sensed gradient
-            self.behavior.step(sensors, AgentAPI(self))
-            [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
+    def get_previous_bin(self):
+        return self.previous_bin
 
-
+    def set_previous_bin(self, new_bin):
+        self.previous_bin = new_bin
 
     def set_gradient(self, gradient):
         self.gradient = gradient
@@ -140,11 +148,11 @@ class Agent:
 
     def get_turn_angle(self):
         angle = 0
+        self.update_levy_counter()
         if self.levy_counter <= 1:
             angle = math.fabs(rw.wrapped_cauchy_ppf(self.crw_factor))
             if random.randint(0, 1):
                 angle = -1.0 * angle
-        self.update_levy_counter()
         self.turn_angle = angle
 
         return self.turn_angle

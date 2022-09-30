@@ -75,21 +75,18 @@ class Environment:
                     self.neighbors_table[id1].append(self.population[id2])
                     self.neighbors_table[id2].append(self.population[id1])
 
-        # you should get the timestep from the main controller
-        # with open(f"{self.filepath}/{self.robotPosFile}", "a") as file:
-        #     file.write(f"{}\t")
-        with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
-            file.write(f"{self.tick}\t")
+        # with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
+        #     file.write(f"{self.tick}\t")
         for robot in self.population:
-            r_pos = np.around(robot.pos, decimals=3)
-            with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
-                file.write(f"{r_pos[0]}\t"
-                           f"{r_pos[1]}\t")
+            # r_pos = np.around(robot.pos, decimals=3)
+            # with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
+            #     file.write(f"{r_pos[0]}\t"
+            #                f"{r_pos[1]}\t")
 
             robot.step()
 
-        with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
-            file.write(f"\n")
+        # with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
+        #     file.write(f"\n")
 
         self.tick += 1
         # # 3. Compute metrics

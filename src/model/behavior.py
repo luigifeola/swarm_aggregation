@@ -100,10 +100,19 @@ class DiffusiveBehavior(Behavior):
         quantization_intervals = np.round(np.linspace(0.0, 1.0, num=api.get_perceptible_gradient.size + 1), 2)[1:]
         # print(f"sensor['GRADIENT']: {sensor['GRADIENT']}")
         idx = np.digitize(sensor['GRADIENT'], quantization_intervals, right=True)
+        previous_idx = api.get_previous_bin()
         self.crw_factor = rw.get_crw_values(idx)
         self.levy_factor = rw.get_levy_values(idx)
         self.std_motion_step = rw.get_std_motion_steps_values(idx)
         api.set_gradient(api.get_perceptible_gradient[idx])
+        # print(f"previous idx:{previous_idx}, actual idx:{idx}")
+        if previous_idx != idx:
+            # print(f"previous idx:{previous_idx}, actual idx:{idx}")
+            # TODO: insert flag in config to change parameters when encountering a new gradient value
+            # api.reset_levy_counter()
+            # print("Perceived a different gradient")
+
+            api.set_previous_bin(idx)
         #
         # for i, q in enumerate(quantization_intervals):
         #     if sensor['GRADIENT'] <= q:
