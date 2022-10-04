@@ -25,13 +25,14 @@ class AgentAPI:
         self.set_speed = agent.set_speed
         self.stop_exploration = agent.stop_exploration
         self.resume_exploration = agent.resume_exploration
+        self.get_irace_switch = agent.get_irace_switch
 
 
 class Agent:
 
     def __init__(self, robot_id, x, y, speed, radius,
                  bool_noise, noise_mu, noise_musd, noise_sd,
-                 behavior, environment):
+                 behavior, environment, irace_switch):
 
         self.id = robot_id
         self.pos = np.array([x, y]).astype('float64')
@@ -60,6 +61,7 @@ class Agent:
         self.trace = deque(self.pos, maxlen=100)
 
         self.behavior = behavior
+        self.irace_switch = irace_switch
         self.api = AgentAPI(self)
 
         self.tick = 0
@@ -197,6 +199,9 @@ class Agent:
 
     def resume_exploration(self):
         self._speed = self.max_speed
+
+    def get_irace_switch(self):
+        return self.irace_switch
 
     def radius(self):
         return self._radius

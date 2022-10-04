@@ -15,7 +15,7 @@ execDir = "./"
 
 ## File to save tuning results as an R dataset, either absolute path or
 ## relative to execDir.
-logFile = "./irace.Rdata"
+logFile = "./Results/irace.Rdata"
 
 ## Previously saved log file to recover the execution of irace, either
 ## absolute path or relative to the current directory.  If empty or NULL,
@@ -39,7 +39,7 @@ trainInstancesDir = "./Instances"
 ## File that contains a list of logical expressions that cannot be TRUE
 ## for any evaluated configuration. If empty or NULL, do not use forbidden
 ## expressions.
-#forbiddenFile = "forbidden.txt"
+forbiddenFile = "forbidden.txt"
 
 ## Script called for each configuration that executes the target algorithm
 ## to be tuned. See templates.
@@ -75,7 +75,7 @@ maxExperiments = 10000
 
 ## Maximum number of decimal places that are significant for numerical
 ## (real) parameters.
-# digits = 4
+digits = 2
 
 ## Debug level of the output of irace. Set this to 0 to silence all debug
 ## messages. Higher values provide more verbose debug messages.

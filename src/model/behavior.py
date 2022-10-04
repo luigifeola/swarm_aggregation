@@ -46,25 +46,29 @@ class SocialBehavior(Behavior):
         # get local number of neighbours here
         neighbors_nbr = len(sensor["NEIGHBORS"])
 
-        #Implementation with discretization and thresholds
-        #index = 0
-        # for threshold in rw.get_neighbors_thresholds_values():
-        #     if(neighbors_nbr >= threshold):
-        #         index+=1
-        if(self.index == 0):
-            self.crw_factor = rw.get_crw_values(self.index)
-            self.levy_factor = rw.get_levy_values(self.index)
-            if(neighbors_nbr >= rw.get_neighbors_thresholds_values()[0]):
-                self.index = 1
-        elif(self.index == 1):
-            self.crw_factor = rw.get_crw_values(self.index)
-            self.levy_factor = rw.get_levy_values(self.index)
-            if(neighbors_nbr <= rw.get_neighbors_thresholds_values()[1]):
-                self.index = 0
+        if(api.get_irace_switch() == 1):
+            # Implementation with discretization and thresholds
+            self.index = 0
+            for threshold in rw.get_neighbors_thresholds_values():
+                if(neighbors_nbr >= threshold):
+                    self.index+=1
 
-        # self.crw_factor = rw.get_crw_values(index)
-        # self.levy_factor = rw.get_levy_values(index)
-        # self.std_motion_step = rw.get_std_motion_steps_values(index)
+            self.crw_factor = rw.get_crw_values(self.index)
+            self.levy_factor = rw.get_levy_values(self.index)
+            self.std_motion_step = rw.get_std_motion_steps_values(self.index)
+
+        if(api.get_irace_switch() == 2):
+            #Implementation with only 2 RW states
+            if(self.index == 0):
+                self.crw_factor = rw.get_crw_values(self.index)
+                self.levy_factor = rw.get_levy_values(self.index)
+                if(neighbors_nbr >= rw.get_neighbors_thresholds_values()[0]):
+                    self.index = 1
+            elif(self.index == 1):
+                self.crw_factor = rw.get_crw_values(self.index)
+                self.levy_factor = rw.get_levy_values(self.index)
+                if(neighbors_nbr <= rw.get_neighbors_thresholds_values()[1]):
+                    self.index = 0
 
 
     def update_movement_based_on_state(self, sensors, api):
