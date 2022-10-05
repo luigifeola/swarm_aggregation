@@ -59,6 +59,7 @@ class SocialBehavior(Behavior):
 
         if(api.get_irace_switch() == 2):
             #Implementation with only 2 RW states
+            self.std_motion_step = rw.get_std_motion_steps_values(0)
             if(self.index == 0):
                 self.crw_factor = rw.get_crw_values(self.index)
                 self.levy_factor = rw.get_levy_values(self.index)
