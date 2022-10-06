@@ -50,6 +50,7 @@ class MainController:
                                        reset_jump=self.config.parameters['RESET_JUMP'],
                                        fixed_extension=self.config.parameters['FIXED_EXTENSION'],
                                        fixed_position=self.config.parameters['FIXED_POSITION'],
+                                       instant_sensing=self.config.parameters['INSTANT_SENSING'],
                                        quantize_background=self.config.parameters["QUANTIZED_BACKGROUND"],
                                        bool_noise=self.config.parameters["NOISE_FLAG"],
                                        noise_mu=self.config.parameters["NOISE_MU"],

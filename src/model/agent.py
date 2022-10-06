@@ -12,10 +12,15 @@ from helpers.utils import get_orientation_from_vector, rotate, rgb
 
 class AgentAPI:
     def __init__(self, agent):
+        self.get_id = agent.get_id
         self.speed = agent.speed
         self.radius = agent.radius
+
+        self.instant_sensing = agent.instant_sensing
+
         self.get_turn_angle = agent.get_turn_angle
         self.reset_levy_counter = agent.reset_levy_counter
+        self.get_levy_counter = agent.get_levy_counter
         self.get_mu = agent.noise_mu
         self.get_perceptible_gradient = agent.environment.get_perceptible_gradient()
 
@@ -34,7 +39,7 @@ class AgentAPI:
 
 class Agent:
 
-    def __init__(self, robot_id, x, y, speed, radius,
+    def __init__(self, robot_id, x, y, speed, radius, instant_sensing,
                  bool_noise, noise_mu, noise_musd, noise_sd,
                  behavior, environment):
 
@@ -45,6 +50,8 @@ class Agent:
         self._radius = radius
         self.orientation = random.random() * 360  # 360 degree angle
         self.turn_angle = 0
+
+        self.instant_sensing = instant_sensing
 
         self.bool_noise = bool_noise
         self.noise_mu = random.gauss(noise_mu, noise_musd)
@@ -98,6 +105,7 @@ class Agent:
         self.move()
         self.update_trace()
         self.tick += 1
+        # print(f"{np.round(self.environment.sense_gradient(self), 4)}")
         self.environment.update_overall_gradient(np.round(self.environment.sense_gradient(self), 4))
 
     def update_trace(self):
@@ -161,6 +169,9 @@ class Agent:
     def reset_levy_counter(self):
         self.levy_counter = 1
 
+    def get_levy_counter(self):
+        return self.levy_counter
+
     def get_tick(self):
         return self.tick
 
@@ -198,6 +209,9 @@ class Agent:
                                   self.pos[0] + self._radius * cos(radians(self.orientation)),
                                   self.pos[1] + self._radius * sin(radians(self.orientation)),
                                   fill="white")
+
+    def get_id(self):
+        return self.id
 
     def speed(self):
         return self._speed

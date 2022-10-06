@@ -1,0 +1,83 @@
+#!/bin/bash
+###############################################################################
+# This script is the command that is executed every run.
+# Check the examples in examples/
+#
+# This script is run in the execution directory (execDir, --exec-dir).
+#
+# PARAMETERS:
+# $1 is the candidate configuration number
+# $2 is the instance ID
+# $3 is the seed
+# $4 is the instance name
+# The rest ($* after `shift 4') are parameters to the run
+#
+# RETURN VALUE:
+# This script should print one numerical value: the cost that must be minimized.
+# Exit with 0 if no error, with 1 in case of error
+###############################################################################
+error() {
+    echo "`TZ=UTC date`: $0: error: $@"
+    exit 1
+}
+
+EXE=~/swarm_aggregation/src/rw_gradient_follower_irace.py
+FIXED_PARAMS=" /home/luigi/swarm_aggregation/config/final_config_linear.txt 2"
+
+CONFIG_ID=$1
+INSTANCE_ID=$2
+SEED=$3
+INSTANCE=$4
+shift 4 || error "Not enough parameters"
+CONFIG_PARAMS=$*
+# CONFIG_PARAMS="--a0 1.2591 --r0 0.7619 --st0 16 --a1 1.7857 --r1 0.5014 --st1 586 --a2 1.71 --r2 0.9054 --st2 948"
+# echo EXE $EXE
+# echo SEED $SEED
+# echo CONFIG_ID $CONFIG_ID
+# echo INSTANCE_ID $INSTANCE_ID
+# echo FIXED_PARAMS $FIXED_PARAMS
+# echo CONFIG_PARAMS $CONFIG_PARAMS
+
+STDOUT=~/swarm_aggregation/irace_tuning/linear_2bits/results/c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stdout
+STDERR=~/swarm_aggregation/irace_tuning/linear_2bits/results/c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
+
+if [ ! -x "${EXE}" ]; then
+    error "${EXE}: not found or not executable (pwd: $(pwd))"
+fi
+
+# If the program just prints a number, we can use 'exec' to avoid
+# creating another process, but there can be no other commands after exec.
+#exec $EXE ${FIXED_PARAMS} -i $INSTANCE ${CONFIG_PARAMS}
+# exit 1
+# 
+# Otherwise, save the output to a file, and parse the result from it.
+# (If you wish to ignore segmentation faults you can use '{}' around
+# the command.)
+python3 $EXE ${SEED} ${CONFIG_ID} ${INSTANCE_ID} ${FIXED_PARAMS} ${CONFIG_PARAMS} 1> ${STDOUT} 2> ${STDERR}
+# OUT=$(python3 $EXE ${SEED} ${FIXED_PARAMS} ${CONFIG_PARAMS})
+# echo "$EXE ${SEED} ${FIXED_PARAMS}"
+# -i $INSTANCE --seed ${SEED} ${CONFIG_PARAMS} 1> ${STDOUT} 2> ${STDERR}"
+# echo $CONFIG_PARAMS
+echo $OUT
+
+
+# # This may be used to introduce a delay if there are filesystem
+# # issues.
+# SLEEPTIME=1
+# while [ ! -s "${STDOUT}" ]; do
+#     sleep $SLEEPTIME
+#     let "SLEEPTIME += 1"
+# done
+
+# This is an example of reading a number from the output.
+# It assumes that the objective value is the first number in
+# the first column of the last line of the output.
+# the "if -s" operator returns true if a file exists and also if it is not empty
+if [ "${STDOUT}" ]; then
+    COST=$(tail -n 1 ${STDOUT} | grep -e '^[[:space:]]*[+-]\?[0-9]' | cut -f1)
+    echo $COST
+    rm -f "${STDOUT}" "${STDERR}"
+    exit 0
+else
+    error "${STDOUT}: No such file or directory"
+fi

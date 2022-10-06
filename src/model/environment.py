@@ -17,8 +17,8 @@ class Environment:
     def __init__(self,
                  crw_params, levy_params, std_motion_steps, quantization_bits=3, reset_jump=1,
                  width=500, height=500,
-                 center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=1, fixed_position=1,
-                 quantize_background=0,
+                 center_gradient=[400//2, 400//2], diffusion_type='linear', fixed_extension=1, fixed_position=1,
+                 instant_sensing=0, quantize_background=0,
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
                  draw_trace_debug=False, draw_communication_range_debug=False,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
@@ -29,6 +29,7 @@ class Environment:
         self.diffusion_type = diffusion_type
         self.fixed_extension = fixed_extension
         self.fixed_position = fixed_position
+        self.instant_sensing = instant_sensing
         self.quantize_background = quantize_background
         self.nb_robots = nb_robots
         self.robot_speed = robot_speed
@@ -122,6 +123,7 @@ class Environment:
                           y=random.randint(self.robot_radius, self.height - 1 - self.robot_radius),
                           speed=self.robot_speed,
                           radius=self.robot_radius,
+                          instant_sensing=self.instant_sensing,
                           bool_noise=self.bool_noise,
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
