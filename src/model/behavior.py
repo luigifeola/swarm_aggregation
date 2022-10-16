@@ -108,7 +108,6 @@ class DiffusiveBehavior(Behavior):
             self.std_motion_step = rw.get_std_motion_steps_values(idx)
             api.set_gradient(api.get_perceptible_gradient[idx])
             # print(f"previous idx:{previous_idx}, actual idx:{idx}")
-            # TODO: insert flag in config to change parameters when encountering a new gradient value
             if previous_idx != idx and api.instant_sensing:
                 api.reset_levy_counter()
                 print(f"{api.get_id()} - Perceived a different gradient")
