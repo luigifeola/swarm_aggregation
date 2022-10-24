@@ -39,7 +39,10 @@ def run(config):
 def generate_config_file(list_args):
     # print('list_args: ', list_args)
     config_path = list_args[3]
-    irace_config = home_path + "/swarm_aggregation/config/irace/irace_config" + list_args[0] + '_' + list_args[
+    irace_config_path = home_path + "/swarm_aggregation/config/irace"
+    if not os.path.exists(irace_config_path):
+        os.makedirs(irace_config_path)
+    irace_config = irace_config_path + "/irace_config" + list_args[0] + '_' + list_args[
         1] + '_' + list_args[2] + ".txt"
     # print('list_args: ', list_args)
     shutil.copyfile(config_path, irace_config)
