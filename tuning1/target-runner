@@ -45,7 +45,7 @@ STDERR=Results/c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
 # Otherwise, save the output to a file, and parse the result from it.
 # (If you wish to ignore segmentation faults you can use '{}' around
 # the command.)
-python3.9 $EXE ${SEED} ${INSTANCE} ${CONFIG_PARAMS} 1> ${STDOUT} 2> ${STDERR}
+python3.9 $EXE ${SEED} ${CONFIG_ID} ${INSTANCE_ID} ${INSTANCE} ${CONFIG_PARAMS} 1> ${STDOUT} 2> ${STDERR}
 
 # # This may be used to introduce a delay if there are filesystem
 # # issues.

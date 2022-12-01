@@ -21,12 +21,14 @@ def run(config):
 def generate_config_file(list_args):
     print('list_args: ', list_args)
     seed = list_args[0]
-    config_path = list_args[1]
-    irace_config = config_path[:-4] + seed + "_temp.txt"
+    config_id = list_args[1]
+    instance_id = list_args[2]
+    config_path = list_args[3]
+    irace_config = config_path[:-4] + seed + config_id + instance_id +  "_temp.txt"
     # print('list_args: ', list_args)
     shutil.copyfile(config_path, irace_config)
 
-    array_str = "NEIGHBORS_THRESHOLDS=" + list_args[3] + "," + list_args[5] + "\n" + "LEVY_FACTORS=" + list_args[7] + "," + list_args[9] + "\n" + "CRW_FACTORS=" + list_args[11] + "," + list_args[13]+ "\n" + "STD_MOTION_STEPS=" + list_args[15] + "," + list_args[15]+ "," + list_args[15]+ "\n" + "IRACE_SWITCH=2"
+    array_str = "NEIGHBORS_THRESHOLDS=" + list_args[5] + "," + list_args[7] + "\n" + "LEVY_FACTORS=" + list_args[9] + "," + list_args[11] + "\n" + "CRW_FACTORS=" + list_args[13] + "," + list_args[15]+ "\n" + "STD_MOTION_STEPS=" + list_args[17] + "," + list_args[17]+ "," + list_args[17]+ "\n" + "IRACE_SWITCH=2"
 
     with open(irace_config, "a") as file:
         file.write(array_str + '\n')
