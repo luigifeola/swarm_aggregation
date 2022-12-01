@@ -70,12 +70,12 @@ class Environment:
             robot.step()
 
         # 3. Compute metrics
-        total_distance = 0
-        for robot1 in self.population:
-            for robot2 in self.population:
-                if robot1 != robot2:
-                    total_distance += distance_between(robot1, robot2)
-        total_distance = -total_distance
+        # total_distance = 0
+        # for robot1 in self.population:
+        #     for robot2 in self.population:
+        #         if robot1 != robot2:
+        #             total_distance += distance_between(robot1, robot2)
+        # total_distance = -total_distance
         # print("Total distance = %s" % total_distance)
 
         clusters = self.get_neighbors_graph().clusters()

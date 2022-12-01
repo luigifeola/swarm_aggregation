@@ -68,7 +68,7 @@ class SocialBehavior(Behavior):
             elif(self.index == 1):
                 self.crw_factor = rw.get_crw_values(self.index)
                 self.levy_factor = rw.get_levy_values(self.index)
-                if(neighbors_nbr <= rw.get_neighbors_thresholds_values()[1]):
+                if(neighbors_nbr < rw.get_neighbors_thresholds_values()[1]):
                     self.index = 0
 
 
