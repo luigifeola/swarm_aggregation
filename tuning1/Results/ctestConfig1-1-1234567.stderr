@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/asion/swarm_aggregation/tuning1/../src/social_aggregation_irace1.py", line 40, in <module>
+    print(main())
+  File "/home/asion/swarm_aggregation/tuning1/../src/social_aggregation_irace1.py", line 13, in main
+    metric = run(config)
+  File "/home/asion/swarm_aggregation/tuning1/../src/social_aggregation_irace1.py", line 18, in run
+    controller.start_simulation()
+  File "/home/asion/swarm_aggregation/src/controllers/main_controller.py", line 70, in start_simulation
+    self.step()
+  File "/home/asion/swarm_aggregation/src/controllers/main_controller.py", line 64, in step
+    self.environment.step()
+  File "/home/asion/swarm_aggregation/src/model/environment.py", line 88, in step
+    if(len(cluster)<=1):
+KeyboardInterrupt

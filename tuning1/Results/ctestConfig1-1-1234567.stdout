@@ -1,0 +1,1 @@
+list_args:  ['1234567', 'testConfig1', '1', '/home/asion/swarm_aggregation/tuning1/Instances/config_batch.txt', '--t0', '7', '--t1', '10', '--a0', '1.41', '--a1', '1.83', '--a2', '1.5', '--r0', '0.96', '--r1', '0.66', '--r2', '0.81', '--std', '15']
