@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-results_size = 10
+results_size = 30
 results = []
 for i in range(results_size):
     df = pd.read_csv("../results/log" + str(i) + ".csv")
@@ -19,12 +19,12 @@ print(df_medians.head())
 print(df_quantile25.head())
 print(df_quantile75.head())
 
-ax = plt.gca()
-df_medians.plot(kind='line', y='cluster_number', color = 'blue', ax=ax, ylim=(0,50))
-df_quantile25.plot(kind='line', y='cluster_number', color = 'blue', ax=ax, legend=False, ylim=(0,50))
-df_quantile75.plot(kind='line', y='cluster_number', color = 'blue', ax=ax, legend=False, ylim=(0,50))
-plt.fill_between(df_medians.index, df_quantile25.cluster_number, df_quantile75.cluster_number)
-plt.show()
+# ax = plt.gca()
+# df_medians.plot(kind='line', y='cluster_number', color = 'blue', ax=ax, ylim=(0,50))
+# df_quantile25.plot(kind='line', y='cluster_number', color = 'blue', ax=ax, legend=False, ylim=(0,50))
+# df_quantile75.plot(kind='line', y='cluster_number', color = 'blue', ax=ax, legend=False, ylim=(0,50))
+# plt.fill_between(df_medians.index, df_quantile25.cluster_number, df_quantile75.cluster_number)
+# plt.show()
 
 ax = plt.gca()
 df_medians.plot(kind='line', y='cluster_metric', color = 'blue', ax=ax, ylim=(0,1))
@@ -32,3 +32,5 @@ df_quantile25.plot(kind='line', y='cluster_metric', color = 'blue', ax=ax, ylim=
 df_quantile75.plot(kind='line', y='cluster_metric', color = 'blue', ax=ax, ylim=(0,1), legend=False)
 plt.fill_between(df_medians.index, df_quantile25.cluster_metric, df_quantile75.cluster_metric)
 plt.show()
+
+print("Median: %f 25th quartile: %f 75th quartile: %f", df_medians["cluster_metric"].iloc[-1], df_quantile25["cluster_metric"].iloc[-1], df_quantile75["cluster_metric"].iloc[-1])

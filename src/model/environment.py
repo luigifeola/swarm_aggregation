@@ -14,7 +14,7 @@ from bisect import bisect
 class Environment:
 
     def __init__(self,
-                 crw_params, levy_params, std_motion_steps, neighbors_thresholds, quantization_bits=3, reset_jump=1,
+                 crw_params, levy_params, std_motion_steps, neighbors_thresholds, quantization_bits=3, reset_jump=1, irace_switch=1,
                  width=500, height=500,
                  center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=0,
                  nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
@@ -44,6 +44,7 @@ class Environment:
         self.noise_mu = noise_mu
         self.noise_musd = noise_musd
         self.noise_sd = noise_sd
+        self.irace_switch = irace_switch
         self.create_robots()
         self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
@@ -69,12 +70,12 @@ class Environment:
             robot.step()
 
         # 3. Compute metrics
-        total_distance = 0
-        for robot1 in self.population:
-            for robot2 in self.population:
-                if robot1 != robot2:
-                    total_distance += distance_between(robot1, robot2)
-        total_distance = -total_distance
+        # total_distance = 0
+        # for robot1 in self.population:
+        #     for robot2 in self.population:
+        #         if robot1 != robot2:
+        #             total_distance += distance_between(robot1, robot2)
+        # total_distance = -total_distance
         # print("Total distance = %s" % total_distance)
 
         clusters = self.get_neighbors_graph().clusters()
@@ -104,6 +105,7 @@ class Environment:
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
+                          irace_switch=self.irace_switch,
                           # behavior=DiffusiveBehavior(self.reset_jump),
                           # TODO: find a better way to switch among behaviours
                           behavior=SocialBehavior(self.reset_jump),

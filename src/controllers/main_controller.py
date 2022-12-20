@@ -54,6 +54,7 @@ class MainController:
                                        noise_mu=self.config.parameters["NOISE_MU"],
                                        noise_musd=self.config.parameters["NOISE_MUSD"],
                                        noise_sd=self.config.parameters["NOISE_SD"],
+                                       irace_switch=self.config.parameters["IRACE_SWITCH"]
                                        )
         self.tick = 0
 

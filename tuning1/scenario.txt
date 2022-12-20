@@ -8,14 +8,14 @@
 
 ## File that contains the description of the parameters of the target
 ## algorithm.
-# parameterFile = "./parameters.txt"
+parameterFile = "./parameters.txt"
 
 ## Directory where the programs will be run.
-# execDir = "./"
+execDir = "./"
 
 ## File to save tuning results as an R dataset, either absolute path or
 ## relative to execDir.
-# logFile = "./irace.Rdata"
+#logFile = "./Results/irace.Rdata"
 
 ## Previously saved log file to recover the execution of irace, either
 ## absolute path or relative to the current directory.  If empty or NULL,
@@ -25,7 +25,7 @@
 ## Directory where training instances are located; either absolute path or
 ## relative to current directory. If no trainInstancesFiles is provided,
 ## all the files in trainInstancesDir will be listed as instances.
-# trainInstancesDir = "./Instances"
+trainInstancesDir = "./Instances"
 
 ## File that contains a list of training instances and optionally
 ## additional parameters for them. If trainInstancesDir is provided, irace
@@ -34,7 +34,7 @@
 
 ## File that contains a table of initial configurations. If empty or NULL,
 ## all initial configurations are randomly generated.
-configurationsFile = "configurations.txt"
+#configurationsFile = "configurations.txt"
 
 ## File that contains a list of logical expressions that cannot be TRUE
 ## for any evaluated configuration. If empty or NULL, do not use forbidden
@@ -43,7 +43,7 @@ forbiddenFile = "forbidden.txt"
 
 ## Script called for each configuration that executes the target algorithm
 ## to be tuned. See templates.
-# targetRunner = "./target-runner"
+targetRunner = "./target-runner"
 
 ## Number of times to retry a call to targetRunner if the call failed.
 # targetRunnerRetries = 0
@@ -63,7 +63,7 @@ forbiddenFile = "forbidden.txt"
 ## Maximum number of runs (invocations of targetRunner) that will be
 ## performed. It determines the maximum budget of experiments for the
 ## tuning.
-maxExperiments = 300
+maxExperiments = 100000
 
 ## Maximum total execution time in seconds for the executions of
 ## targetRunner. targetRunner must return two values: cost and time.
@@ -75,7 +75,7 @@ maxExperiments = 300
 
 ## Maximum number of decimal places that are significant for numerical
 ## (real) parameters.
-# digits = 4
+digits = 2
 
 ## Debug level of the output of irace. Set this to 0 to silence all debug
 ## messages. Higher values provide more verbose debug messages.

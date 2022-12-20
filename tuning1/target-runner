@@ -21,8 +21,7 @@ error() {
     exit 1
 }
 
-EXE=../src/social_aggregation_irace.py
-FIXED_PARAMS="~/swarm_aggregation/config/config_batch.txt"
+EXE=../src/social_aggregation_irace1.py
 
 CONFIG_ID=$1
 INSTANCE_ID=$2
@@ -31,8 +30,8 @@ INSTANCE=$4
 shift 4 || error "Not enough parameters"
 CONFIG_PARAMS=$*
 
-STDOUT=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stdout
-STDERR=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
+STDOUT=Results/c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stdout
+STDERR=Results/c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
 
 # if [ ! -x "${EXE}" ]; then
 #     error "${EXE}: not found or not executable (pwd: $(pwd))"
@@ -46,7 +45,7 @@ STDERR=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
 # Otherwise, save the output to a file, and parse the result from it.
 # (If you wish to ignore segmentation faults you can use '{}' around
 # the command.)
-python3 $EXE ${SEED} ${INSTANCE} ${CONFIG_PARAMS} 1> ${STDOUT} 2> ${STDERR}
+python3.9 $EXE ${SEED} ${CONFIG_ID} ${INSTANCE_ID} ${INSTANCE} ${CONFIG_PARAMS} 1> ${STDOUT} 2> ${STDERR}
 
 # # This may be used to introduce a delay if there are filesystem
 # # issues.
