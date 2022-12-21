@@ -8,9 +8,14 @@ from sys import argv
 random.seed(int(argv[1]))
 
 # possible combination of values depending on the environment
-__crw_values = np.array([])
-__levy_values = np.array([])
-__std_motion_steps_values = np.array([])
+
+__crw_values_grad = np.array([])
+__levy_values_grad = np.array([])
+__std_motion_steps_values_grad = np.array([])
+__crw_values_soc = np.array([])
+__levy_values_soc = np.array([])
+__std_motion_steps_values_soc = np.array([])
+__neighbors_thresholds_values = np.array([])
 
 
 def exponential_distribution(lambda_):
@@ -54,38 +59,48 @@ def wrapped_cauchy_ppf(crw_exponent):
     return theta
 
 
-# Here you initialize the different parameters loaded from the config file
-def init_values(crw_params, levy_params, std_motion_steps, q_bits=-1):
-    global __crw_values, __levy_values, __std_motion_steps_values
 
-    __crw_values = np.array(crw_params, dtype=float)
-    __levy_values = np.array(levy_params, dtype=float)
-    __std_motion_steps_values = np.array(std_motion_steps, dtype=int)
+# Here you initialize the different parameteres loaded from the config file
+def init_values(crw_params_grad, levy_params_grad, std_motion_steps_grad,
+    crw_params_soc, levy_params_soc, std_motion_steps_soc, neighbors_thresholds, q_bits=-1):
+    global __crw_values_grad, __levy_values_grad, __std_motion_steps_values_grad, __crw_values_soc, __levy_values_soc, __std_motion_steps_values_soc, __neighbors_thresholds_values
 
+    __crw_values_grad = np.array(crw_params_grad, dtype=float)
+    __levy_values_grad = np.array(levy_params_grad, dtype=float)
+    __std_motion_steps_values_grad = np.array(std_motion_steps_grad, dtype=int)
+    __crw_values_soc = np.array(crw_params_soc, dtype=float)
+    __levy_values_soc = np.array(levy_params_soc, dtype=float)
+    __std_motion_steps_values_soc = np.array(std_motion_steps_soc, dtype=int)
+    __neighbors_thresholds_values = np.array(neighbors_thresholds, dtype=int)
+    
     if q_bits != -1:
-        __crw_values = __crw_values.reshape(q_bits, q_bits)
-        __levy_values = __levy_values.reshape(q_bits, q_bits)
-        __std_motion_steps_values = __std_motion_steps_values.reshape(q_bits, q_bits)
+        __crw_values_grad = __crw_values_grad.reshape(q_bits, q_bits)
+        __levy_values_grad = __levy_values_grad.reshape(q_bits, q_bits)
+        __std_motion_steps_values_grad = __std_motion_steps_values_grad.reshape(q_bits, q_bits)
 
-    # print('crw_values ', __crw_values)
-    # print('levy_values ', __levy_values)
-    # print('max_levy_values ', __std_motion_steps_values)
-
-
-def get_crw_values(i, f=-1):
+def get_crw_values_grad(i, f=-1):
     if f != -1:
-        return __crw_values[i][f]
-    return __crw_values[i]
+        return __crw_values_grad[i][f]
+    return __crw_values_grad[i]
 
+def get_crw_values_soc(i):
+    return __crw_values_soc[i]
 
-def get_levy_values(i, f=-1):
+def get_levy_values_grad(i, f=-1):
     if f != -1:
-        return __levy_values[i][f]
-    return __levy_values[i]
+        return __levy_values_grad[i][f]
+    return __levy_values_grad[i]
 
+def get_levy_values_soc(i):
+    return __levy_values_soc[i]
 
-def get_std_motion_steps_values(i, f=-1):
+def get_std_motion_steps_values_grad(i, f=-1):
     if f != -1:
-        return __std_motion_steps_values[i][f]
-    return __std_motion_steps_values[i]
+        return __std_motion_steps_values_grad[i][f]
+    return __std_motion_steps_values_grad[i]
 
+def get_std_motion_steps_values_soc(i):
+    return __std_motion_steps_values_soc[i]
+
+def get_neighbors_thresholds_values():
+    return __neighbors_thresholds_values

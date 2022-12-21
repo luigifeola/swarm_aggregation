@@ -211,16 +211,25 @@ void loop() {
       crw_factor = 0.9 * exp_factor;
       levy_factor = 2 - 1.9 * exp_factor;
 
+      // if(neighbors_count >= 3)
+      // {
+      //   stay_factor = 0;
+      // }
+      // else
+      // {
+      //   stay_factor = 1;
+      // }
+
       //stay ?
-      double uniform_number = uniform_distribution(0,1);
-      if(uniform_number >= exp_factor)
-      {
-        stay_factor = 0;
-      }
-      else
-      {
-        stay_factor = 1;
-      }
+      // double uniform_number = uniform_distribution(0,1);
+      // if(uniform_number >= exp_factor)
+      // {
+      //   stay_factor = 0;
+      // }
+      // else
+      // {
+      //   stay_factor = 1;
+      // }
 
       //from factors calculate weights
       crw_pdf();

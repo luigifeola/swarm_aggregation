@@ -44,3 +44,6 @@ robot_pos_PP.ipynb
 *.png
 config/irace/*
 irace_tuning/linear_2bits/results/*
+*.pdf
+tuning/*.stderr
+tuning/*.stdout

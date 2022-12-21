@@ -28,9 +28,11 @@ class Behavior(ABC):
 
 class SocialBehavior(Behavior):
 
-    def __init__(self):
+    def __init__(self, reset_jump):
         super().__init__()
         self.base_speed = 0
+        self.reset_jump = reset_jump
+        self.index = 0
 
     def step(self, sensors, api):
         if self.base_speed == 0:
@@ -41,48 +43,62 @@ class SocialBehavior(Behavior):
 
     def update_behavior(self, sensor, api):
 
-        update_rate = 20
-        if(api.get_tick()%update_rate == 0):
-            # get local number of neighbours here
-            neighbors_nbr = len(sensor["NEIGHBORS"])
-            alpha = 1 #between 0 and 1
-            beta = 0.3 #between 0 and +inf
-            exp_factor = alpha * exp(-beta * neighbors_nbr)
+        # get local number of neighbours here
+        neighbors_nbr = len(sensor["NEIGHBORS"])
 
-            #Implementation 1 : exp_factor directly influence the RW factors + speed
-            self.crw_factor = 0.9 * exp_factor
-            self.levy_factor = 2 - 0.8 * exp_factor
-            #taking speed into account ?
+        if(api.get_irace_switch() == 1):
+            # Implementation with discretization and thresholds
+            self.index = 0
+            for threshold in rw.get_neighbors_thresholds_values():
+                if(neighbors_nbr >= threshold):
+                    self.index+=1
 
-            api.set_speed(self.base_speed * exp_factor)
+            self.crw_factor = rw.get_crw_values_soc(self.index)
+            self.levy_factor = rw.get_levy_values_soc(self.index)
+            self.std_motion_step = rw.get_std_motion_steps_values_soc(self.index)
 
-            #Implementation 2: exp_factor directly influence the RW factors + max_levy_steps
-            # self.crw_factor = 0.9 * exp_factor
-            # self.levy_factor = -0.8 * exp_factor + 2
-            # self.max_levy_steps = int(1000 * exp_factor)
-            # if(self.max_levy_steps == 0): self.max_levy_steps = 1
+        if(api.get_irace_switch() == 2):
+            #Implementation with only 2 RW states
+            self.std_motion_step = rw.get_std_motion_steps_values_soc(0)
+            if(self.index == 0):
+                self.crw_factor = rw.get_crw_values_soc(self.index)
+                self.levy_factor = rw.get_levy_values_soc(self.index)
+                if(neighbors_nbr >= rw.get_neighbors_thresholds_values()[0]):
+                    self.index = 1
+            elif(self.index == 1):
+                self.crw_factor = rw.get_crw_values_soc(self.index)
+                self.levy_factor = rw.get_levy_values_soc(self.index)
+                if(neighbors_nbr < rw.get_neighbors_thresholds_values()[1]):
+                    self.index = 0
+        #part to compute gradient metric correctly if heterogeneous swarm              
+        quantization_intervals = np.round(np.linspace(0.0, 1.0, num=api.get_perceptible_gradient.size + 1), 2)[1:]
 
-            #Implementation 3: exp_factor with probs
-            # random_number = np.random.uniform(0,1)
-            # if(random_number <= exp_factor):
-            #     self.crw_factor = 0.9
-            #     self.levy_factor = 1.2
-            #     api.set_speed(self.base_speed)
-            # else:
-            #     self.crw_factor = 0
-            #     self.levy_factor = 2
-            #     api.set_speed(self.base_speed * exp_factor)
+        previous_idx = api.get_previous_bin()
+        idx = np.digitize(sensor['GRADIENT'], quantization_intervals, right=True)
+
+        if api.get_levy_counter() <= 1 or (previous_idx != idx and api.instant_sensing):
+            # print(f"sensor['GRADIENT']: {sensor['GRADIENT']}")
+            api.set_gradient(api.get_perceptible_gradient[idx])
+            # print(f"previous idx:{previous_idx}, actual idx:{idx}")
+            api.set_previous_bin(idx)
+
 
     def update_movement_based_on_state(self, sensors, api):
         turn_angle = api.get_turn_angle()
-        self.dr = api.speed() * np.array([cos(radians(turn_angle)), sin(radians(turn_angle))])
-        self.wall_avoidance(sensors)
+        self.dr = api.speed() * np.array([cos(turn_angle), sin(turn_angle)])
+        if self.reset_jump and self.wall_avoidance(sensors):
+            api.reset_levy_counter()
 
     def wall_avoidance(self, sensors):
-        if (sensors["FRONT"] and self.dr[0] >= 0) or (sensors["BACK"] and self.dr[0] <= 0):
-            self.dr[0] = -self.dr[0]
+        colliding = False
         if (sensors["RIGHT"] and self.dr[1] <= 0) or (sensors["LEFT"] and self.dr[1] >= 0):
             self.dr[1] = -self.dr[1]
+            colliding = True
+        if (sensors["FRONT"] and self.dr[0] >= 0) or (sensors["BACK"] and self.dr[0] <= 0):
+            self.dr[0] = -self.dr[0]
+            colliding = True
+
+        return colliding
 
 
 class DiffusiveBehavior(Behavior):
@@ -98,14 +114,15 @@ class DiffusiveBehavior(Behavior):
 
     def update_behavior(self, sensor, api):
         quantization_intervals = np.round(np.linspace(0.0, 1.0, num=api.get_perceptible_gradient.size + 1), 2)[1:]
+
         previous_idx = api.get_previous_bin()
         idx = np.digitize(sensor['GRADIENT'], quantization_intervals, right=True)
 
         if api.get_levy_counter() <= 1 or (previous_idx != idx and api.instant_sensing):
             # print(f"sensor['GRADIENT']: {sensor['GRADIENT']}")
-            self.crw_factor = rw.get_crw_values(idx)
-            self.levy_factor = rw.get_levy_values(idx)
-            self.std_motion_step = rw.get_std_motion_steps_values(idx)
+            self.crw_factor = rw.get_crw_values_grad(idx)
+            self.levy_factor = rw.get_levy_values_grad(idx)
+            self.std_motion_step = rw.get_std_motion_steps_values_grad(idx)
             api.set_gradient(api.get_perceptible_gradient[idx])
             # print(f"previous idx:{previous_idx}, actual idx:{idx}")
             if previous_idx != idx and api.instant_sensing:
@@ -113,6 +130,7 @@ class DiffusiveBehavior(Behavior):
                 print(f"{api.get_id()} - Perceived a different gradient")
 
             api.set_previous_bin(idx)
+
 
     def update_movement_based_on_state(self, sensors, api):
         turn_angle = api.get_turn_angle()
@@ -132,4 +150,3 @@ class DiffusiveBehavior(Behavior):
             colliding = True
 
         return colliding
-

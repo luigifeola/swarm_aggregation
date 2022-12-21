@@ -39,14 +39,19 @@ class MainController:
                                        height=self.config.parameters["HEIGHT"],
                                        center_gradient=self.config.parameters["CENTER_GRADIENT"],
                                        diffusion_type=self.config.parameters["DIFFUSION_TYPE"],
-                                       nb_robots=self.config.parameters["NB_ROBOTS"],
+                                       nb_soc_robots=self.config.parameters["NB_SOC_ROBOTS"],
+                                       nb_grad_robots=self.config.parameters["NB_GRAD_ROBOTS"],
                                        robot_speed=self.config.parameters["ROBOT_SPEED"],
                                        communication_radius=self.config.parameters["COMMUNICATION_RADIUS"],
                                        robot_radius=self.config.parameters["ROBOT_RADIUS"],
                                        quantization_bits=config.parameters["QUANTIZATION_BITS"],
-                                       crw_params=self.config.parameters['CRW_FACTORS'],
-                                       levy_params=self.config.parameters['LEVY_FACTORS'],
-                                       std_motion_steps=self.config.parameters['STD_MOTION_STEPS'],
+                                       crw_params_grad=self.config.parameters['CRW_FACTORS_GRAD'],
+                                       levy_params_grad=self.config.parameters['LEVY_FACTORS_GRAD'],
+                                       std_motion_steps_grad=self.config.parameters['STD_MOTION_STEPS_GRAD'],
+                                       crw_params_soc=self.config.parameters['CRW_FACTORS_SOC'],
+                                       levy_params_soc=self.config.parameters['LEVY_FACTORS_SOC'],
+                                       std_motion_steps_soc=self.config.parameters['STD_MOTION_STEPS_SOC'],
+                                       neighbors_thresholds=self.config.parameters['NEIGHBORS_THRESHOLDS'],
                                        reset_jump=self.config.parameters['RESET_JUMP'],
                                        fixed_extension=self.config.parameters['FIXED_EXTENSION'],
                                        fixed_position=self.config.parameters['FIXED_POSITION'],
@@ -56,6 +61,7 @@ class MainController:
                                        noise_mu=self.config.parameters["NOISE_MU"],
                                        noise_musd=self.config.parameters["NOISE_MUSD"],
                                        noise_sd=self.config.parameters["NOISE_SD"],
+                                       irace_switch=self.config.parameters["IRACE_SWITCH"]
                                        )
         self.tick = 0
 
@@ -79,6 +85,11 @@ class MainController:
 
     def get_overall_gradient(self):
         return self.environment.sensed_gradient
+
+    def get_cluster_metric(self):
+        all_metrics = self.environment.metrics
+        last_line = all_metrics[-1]
+        return float(last_line.split(",",1)[1])
 
     def write_metrics(self, file_path):
         print("Writing in %s" % file_path)
