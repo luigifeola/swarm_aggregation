@@ -14,10 +14,12 @@ from bisect import bisect
 class Environment:
 
     def __init__(self,
-                 crw_params, levy_params, std_motion_steps, neighbors_thresholds, quantization_bits=3, reset_jump=1, irace_switch=1,
+                 crw_params_grad, levy_params_grad, std_motion_steps_grad,
+                 crw_params_soc, levy_params_soc, std_motion_steps_soc, neighbors_thresholds, irace_switch=2,
+                 quantization_bits=3, reset_jump=1,
                  width=500, height=500,
                  center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=0,
-                 nb_robots=30, robot_speed=3, robot_radius=5, communication_radius=25,
+                 nb_soc_robots=20, nb_grad_robots=5, robot_speed=3, robot_radius=5, communication_radius=25,
                  draw_trace_debug=False, draw_communication_range_debug=False,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
         self.population = list()
@@ -26,15 +28,20 @@ class Environment:
         self.center_gradient = center_gradient
         self.diffusion_type = diffusion_type
         self.fixed_extension = fixed_extension
-        self.nb_robots = nb_robots
+        self.nb_soc_robots = nb_soc_robots
+        self.nb_grad_robots = nb_grad_robots
         self.robot_speed = robot_speed
         self.robot_radius = robot_radius
         self.robot_communication_radius = communication_radius
         self.quantization_bits = quantization_bits
-        self.crw_params = crw_params
-        self.levy_params = levy_params
-        self.std_motion_steps = std_motion_steps
+        self.crw_params_grad = crw_params_grad
+        self.levy_params_grad = levy_params_grad
+        self.std_motion_steps_grad = std_motion_steps_grad
+        self.crw_params_soc = crw_params_soc
+        self.levy_params_soc = levy_params_soc
+        self.std_motion_steps_soc = std_motion_steps_soc
         self.neighbors_thresholds = neighbors_thresholds
+        self.irace_switch = irace_switch
         self.reset_jump = bool(reset_jump)
         self.perceptible_gradient = None
         self.perceptible_thresholds = None
@@ -44,7 +51,6 @@ class Environment:
         self.noise_mu = noise_mu
         self.noise_musd = noise_musd
         self.noise_sd = noise_sd
-        self.irace_switch = irace_switch
         self.create_robots()
         self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
@@ -95,7 +101,7 @@ class Environment:
         self.metrics.append(str(cluster_count) + "," + str(cluster_metric))
 
     def create_robots(self):
-        for robot_id in range(self.nb_robots):
+        for robot_id in range(self.nb_soc_robots):
             robot = Agent(robot_id=robot_id,
                           x=random.randint(self.robot_radius, self.width - 1 - self.robot_radius),
                           y=random.randint(self.robot_radius, self.height - 1 - self.robot_radius),
@@ -106,9 +112,21 @@ class Environment:
                           noise_musd=self.noise_musd,
                           noise_sd=self.noise_sd,
                           irace_switch=self.irace_switch,
-                          # behavior=DiffusiveBehavior(self.reset_jump),
-                          # TODO: find a better way to switch among behaviours
                           behavior=SocialBehavior(self.reset_jump),
+                          environment=self)
+            self.population.append(robot)
+        for robot_id in range(self.nb_soc_robots, self.nb_soc_robots + self.nb_grad_robots):
+            robot = Agent(robot_id=robot_id,
+                          x=random.randint(self.robot_radius, self.width - 1 - self.robot_radius),
+                          y=random.randint(self.robot_radius, self.height - 1 - self.robot_radius),
+                          speed=self.robot_speed,
+                          radius=self.robot_radius,
+                          bool_noise=self.bool_noise,
+                          noise_mu=self.noise_mu,
+                          noise_musd=self.noise_musd,
+                          noise_sd=self.noise_sd,
+                          irace_switch=self.irace_switch,
+                          behavior=DiffusiveBehavior(self.reset_jump),
                           environment=self)
             self.population.append(robot)
 
@@ -137,10 +155,10 @@ class Environment:
 
     def create_environment(self):
         # Random center position
-        rand_x = random.randint(0, self.width)
-        rand_y = random.randint(0, self.height)
-        self.center_gradient = np.array([rand_x, rand_y])
-        # self.center_gradient = np.array([self.width//2, self.width//2])
+        # rand_x = random.randint(0, self.width)
+        # rand_y = random.randint(0, self.height)
+        # self.center_gradient = np.array([rand_x, rand_y])
+        self.center_gradient = np.array([self.width//2, self.width//2])
 
         background = 255 * np.ones([self.width, self.height])
 
@@ -176,12 +194,10 @@ class Environment:
         return background
 
     def init_robot_parameters(self):
-
-        random_walk.init_values(self.crw_params, self.levy_params, self.std_motion_steps, self.neighbors_thresholds)
+        random_walk.init_values(self.crw_params_grad, self.levy_params_grad, self.std_motion_steps_grad,
+        self.crw_params_soc, self.levy_params_soc, self.std_motion_steps_soc, self.neighbors_thresholds)
         self.perceptible_gradient = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits), 2)
         self.perceptible_thresholds = np.round(np.linspace(0.0, 1.0, num=self.quantization_bits+1), 2)
-
-        # print('perceptible_gradient ', self.perceptible_gradient)
 
     def get_sensors(self, robot):
         orientation = robot.orientation
