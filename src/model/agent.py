@@ -12,14 +12,24 @@ from helpers.utils import get_orientation_from_vector, rotate, rgb
 
 class AgentAPI:
     def __init__(self, agent):
+        self.get_id = agent.get_id
         self.speed = agent.speed
         self.radius = agent.radius
+
+        self.instant_sensing = agent.instant_sensing
+
         self.get_turn_angle = agent.get_turn_angle
         self.reset_levy_counter = agent.reset_levy_counter
+        self.get_levy_counter = agent.get_levy_counter
         self.get_mu = agent.noise_mu
         self.get_perceptible_gradient = agent.environment.get_perceptible_gradient()
+
         self.set_gradient = agent.set_gradient
         self.get_gradient = agent.get_gradient
+
+        self.get_previous_bin = agent.get_previous_bin
+        self.set_previous_bin = agent.set_previous_bin
+
         self.get_tick = agent.get_tick
         self.pos = agent.pos
         self.set_speed = agent.set_speed
@@ -30,7 +40,7 @@ class AgentAPI:
 
 class Agent:
 
-    def __init__(self, robot_id, x, y, speed, radius,
+    def __init__(self, robot_id, x, y, speed, radius, instant_sensing,
                  bool_noise, noise_mu, noise_musd, noise_sd,
                  behavior, environment, irace_switch):
 
@@ -41,6 +51,8 @@ class Agent:
         self._radius = radius
         self.orientation = random.random() * 360  # 360 degree angle
         self.turn_angle = 0
+        
+        self.instant_sensing = instant_sensing
 
         self.bool_noise = bool_noise
         self.noise_mu = random.gauss(noise_mu, noise_musd)
@@ -55,7 +67,8 @@ class Agent:
         self.crw_factor = 0.0
         self.max_levy_steps = 1000
 
-        self.gradient = 0
+        self.gradient = None
+        self.previous_bin = -1
 
         self.levy_counter = 1
         self.trace = deque(self.pos, maxlen=100)
@@ -70,6 +83,7 @@ class Agent:
         return f"ID: {self.id}\n" \
                f"drift: {round(self.noise_mu, 5)}\n" \
                f"position: {np.round(self.pos, 2)}\n" \
+               f"turning angle: {np.round(self.turn_angle, 2)}\n" \
                f"angle: {np.round(self.orientation, 2)}\n" \
                f"dr: {self.behavior.get_dr()}\n" \
                f"rho: {np.round(self.behavior.get_rw_factors()[0], 2)}\n" \
@@ -84,18 +98,17 @@ class Agent:
         return f"bot {self.id}"
 
     def step(self):
-        sensors = self.environment.get_sensors(self)
 
+        sensors = self.environment.get_sensors(self)
         # set the walk parameters based on the sensed gradient
         self.behavior.step(sensors, AgentAPI(self))
-
-        [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
 
         self.behavior.update_movement_based_on_state(sensors, AgentAPI(self))
         self.move()
         self.update_trace()
         self.tick += 1
-        self.environment.update_overall_gradient(self.gradient)
+        # print(f"{np.round(self.environment.sense_gradient(self), 4)}")
+        self.environment.update_overall_gradient(np.round(self.environment.sense_gradient(self), 4))
 
     def update_trace(self):
         self.trace.appendleft(self.pos[1])
@@ -125,10 +138,17 @@ class Agent:
 
     def update_levy_counter(self):
         self.levy_counter -= 1
+        [self.crw_factor, self.levy_factor, self.std_motion_step] = self.behavior.get_rw_factors()
 
         if self.levy_counter <= 0:
             self.levy_counter = round(math.fabs(rw.levy_distribution(self.std_motion_step, self.levy_factor)))
 
+
+    def get_previous_bin(self):
+        return self.previous_bin
+
+    def set_previous_bin(self, new_bin):
+        self.previous_bin = new_bin
 
     def set_gradient(self, gradient):
         self.gradient = gradient
@@ -138,17 +158,19 @@ class Agent:
 
     def get_turn_angle(self):
         angle = 0
+        self.update_levy_counter()
         if self.levy_counter <= 1:
             angle = math.fabs(rw.wrapped_cauchy_ppf(self.crw_factor))
             if random.randint(0, 1):
                 angle = -1.0 * angle
-        self.update_levy_counter()
         self.turn_angle = angle
-
         return self.turn_angle
 
     def reset_levy_counter(self):
         self.levy_counter = 1
+
+    def get_levy_counter(self):
+        return self.levy_counter
 
     def get_tick(self):
         return self.tick
@@ -187,6 +209,9 @@ class Agent:
                                   self.pos[0] + self._radius * cos(radians(self.orientation)),
                                   self.pos[1] + self._radius * sin(radians(self.orientation)),
                                   fill="white")
+
+    def get_id(self):
+        return self.id
 
     def speed(self):
         return self._speed

@@ -1,0 +1,88 @@
+###################################################### -*- mode: r -*- #####
+## Scenario setup for Iterated Race (irace).
+############################################################################
+
+## File that contains the description of the parameters of the target
+## algorithm.
+parameterFile = "./parameters.txt"
+
+## Directory where the programs will be run.
+execDir = "~/swarm_aggregation"
+
+## File to save tuning results as an R dataset, either absolute path or
+## relative to execDir.
+# logFile = "./irace.Rdata"
+
+## Previously saved log file to recover the execution of irace, either
+## absolute path or relative to the current directory.  If empty or NULL,
+## recovery is not performed.
+# recoveryFile = ""
+
+## Directory where training instances are located; either absolute path or
+## relative to current directory. If no trainInstancesFiles is provided,
+## all the files in trainInstancesDir will be listed as instances.
+trainInstancesDir = "./Instances"
+
+## File that contains a table of initial configurations. If empty or NULL,
+## all initial configurations are randomly generated.
+# configurationsFile = "configurations.txt"
+
+## File that contains a list of logical expressions that cannot be TRUE
+## for any evaluated configuration. If empty or NULL, do not use forbidden
+## expressions.
+forbiddenFile = "forbidden.txt"
+
+## Script called for each configuration that executes the target algorithm
+## to be tuned. See templates.
+targetRunner = "./target-runner"
+
+## Number of times to retry a call to targetRunner if the call failed.
+# targetRunnerRetries = 0
+
+## Maximum number of runs (invocations of targetRunner) that will be
+## performed. It determines the maximum budget of experiments for the
+## tuning.
+maxExperiments = 500000
+
+## Maximum number of decimal places that are significant for numerical
+## (real) parameters.
+digits = 2
+
+## Number of iterations.
+# nbIterations = 0
+
+## Number of runs of the target algorithm per iteration.
+# nbExperimentsPerIteration = 0
+
+## Number of instances evaluated before the first elimination test. It
+## must be a multiple of eachTest.
+# firstTest = 5
+
+## Number of instances evaluated between elimination tests.
+# eachTest = 1
+
+## Minimum number of configurations needed to continue the execution of
+## each race (iteration).
+# minNbSurvival = 0
+
+## Number of configurations to be sampled and evaluated at each iteration.
+# nbConfigurations = 0
+
+## Parameter used to define the number of configurations sampled and
+## evaluated at each iteration.
+# mu = 5
+
+## Confidence level for the elimination test.
+# confidence = 0.95
+
+## If the target algorithm is deterministic, configurations will be
+## evaluated only once per instance.
+# deterministic = 0
+
+## Seed of the random number generator (by default, generate a random
+## seed).
+# seed = NA
+
+## END of scenario file
+############################################################################
+

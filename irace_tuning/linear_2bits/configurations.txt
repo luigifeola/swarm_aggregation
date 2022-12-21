@@ -1,0 +1,17 @@
+## Template for specifying initial parameter configurations, for
+## example, the default configuration, in irace.
+##
+## This filename must be specified via the --candidates-file command-line option
+## (or candidatesFile in scenario.txt).
+##
+## The format is one parameter configuration per line, and one parameter per
+## column. The first line gives the parameter name corresponding to
+## each column (names must match those given in the parameters
+## file). Each configuration must satisfy the
+## parameter conditions (NA should be used for those parameters that
+## are not enabled for a given configuration) and, if given, the
+## constraints that describe forbidden configurations.
+
+## alpha0  rho0  str_steps0 alpha1 rho1    str_steps1 alpha2 rho2  str_steps2 alpha3 rho3  str_steps3
+## 2.0     0.0     1           1.75  0.33    333       1.45   0.66      666    1.2   0.99      1000
+

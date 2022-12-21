@@ -70,17 +70,17 @@ class SocialBehavior(Behavior):
                 self.levy_factor = rw.get_levy_values_soc(self.index)
                 if(neighbors_nbr < rw.get_neighbors_thresholds_values()[1]):
                     self.index = 0
-        #part to compute gradient metric correctly if heterogeneous swarm
+        #part to compute gradient metric correctly if heterogeneous swarm              
         quantization_intervals = np.round(np.linspace(0.0, 1.0, num=api.get_perceptible_gradient.size + 1), 2)[1:]
-        for i, q in enumerate(quantization_intervals):
-            if sensor['GRADIENT'] <= q:
-                # print("sensor['GRADIENT']: ", sensor['GRADIENT'], '\t', 'val: ', q)
-                if api.get_gradient() != api.get_perceptible_gradient[i]:
-                    # print("api.get_gradient: ", api.get_gradient(), '\t', 'api.get_perceptible_gradient[i]: ', api.get_perceptible_gradient[i])
-                    api.set_gradient(api.get_perceptible_gradient[i])
-                    # api.reset_levy_counter()
-                    # print("Perceived a different gradient")
-                break
+
+        previous_idx = api.get_previous_bin()
+        idx = np.digitize(sensor['GRADIENT'], quantization_intervals, right=True)
+
+        if api.get_levy_counter() <= 1 or (previous_idx != idx and api.instant_sensing):
+            # print(f"sensor['GRADIENT']: {sensor['GRADIENT']}")
+            api.set_gradient(api.get_perceptible_gradient[idx])
+            # print(f"previous idx:{previous_idx}, actual idx:{idx}")
+            api.set_previous_bin(idx)
 
 
     def update_movement_based_on_state(self, sensors, api):
@@ -114,18 +114,23 @@ class DiffusiveBehavior(Behavior):
 
     def update_behavior(self, sensor, api):
         quantization_intervals = np.round(np.linspace(0.0, 1.0, num=api.get_perceptible_gradient.size + 1), 2)[1:]
-        for i, q in enumerate(quantization_intervals):
-            if sensor['GRADIENT'] <= q:
-                # print("sensor['GRADIENT']: ", sensor['GRADIENT'], '\t', 'val: ', q)
-                if api.get_gradient() != api.get_perceptible_gradient[i]:
-                    # print("api.get_gradient: ", api.get_gradient(), '\t', 'api.get_perceptible_gradient[i]: ', api.get_perceptible_gradient[i])
-                    self.crw_factor = rw.get_crw_values_grad(i)
-                    self.levy_factor = rw.get_levy_values_grad(i)
-                    self.std_motion_step = rw.get_std_motion_steps_values_grad(i)
-                    api.set_gradient(api.get_perceptible_gradient[i])
-                    # api.reset_levy_counter()
-                    # print("Perceived a different gradient")
-                break
+
+        previous_idx = api.get_previous_bin()
+        idx = np.digitize(sensor['GRADIENT'], quantization_intervals, right=True)
+
+        if api.get_levy_counter() <= 1 or (previous_idx != idx and api.instant_sensing):
+            # print(f"sensor['GRADIENT']: {sensor['GRADIENT']}")
+            self.crw_factor = rw.get_crw_values_grad(idx)
+            self.levy_factor = rw.get_levy_values_grad(idx)
+            self.std_motion_step = rw.get_std_motion_steps_values_grad(idx)
+            api.set_gradient(api.get_perceptible_gradient[idx])
+            # print(f"previous idx:{previous_idx}, actual idx:{idx}")
+            if previous_idx != idx and api.instant_sensing:
+                api.reset_levy_counter()
+                print(f"{api.get_id()} - Perceived a different gradient")
+
+            api.set_previous_bin(idx)
+
 
     def update_movement_based_on_state(self, sensors, api):
         turn_angle = api.get_turn_angle()

@@ -1,3 +1,4 @@
+import os
 from math import cos, sin, radians
 from helpers.utils import norm, distance_between, matrix_index_distances, get_pixel_col
 import random
@@ -18,7 +19,8 @@ class Environment:
                  crw_params_soc, levy_params_soc, std_motion_steps_soc, neighbors_thresholds, irace_switch=2,
                  quantization_bits=3, reset_jump=1,
                  width=500, height=500,
-                 center_gradient=[500//2, 500//2], diffusion_type='linear', fixed_extension=0,
+                 center_gradient=[400//2, 400//2], diffusion_type='linear', fixed_extension=1, fixed_position=1,
+                 instant_sensing=0, quantize_background=0,
                  nb_soc_robots=20, nb_grad_robots=5, robot_speed=3, robot_radius=5, communication_radius=25,
                  draw_trace_debug=False, draw_communication_range_debug=False,
                  bool_noise=1, noise_mu=0, noise_musd=1, noise_sd=0.1):
@@ -28,6 +30,9 @@ class Environment:
         self.center_gradient = center_gradient
         self.diffusion_type = diffusion_type
         self.fixed_extension = fixed_extension
+        self.fixed_position = fixed_position
+        self.instant_sensing = instant_sensing
+        self.quantize_background = quantize_background
         self.nb_soc_robots = nb_soc_robots
         self.nb_grad_robots = nb_grad_robots
         self.robot_speed = robot_speed
@@ -55,9 +60,18 @@ class Environment:
         self.neighbors_table = [[] for i in range(len(self.population))]
         self.img = None
         self.init_robot_parameters()
-        self.background = self.create_environment()
+        if quantize_background:
+            self.quantized_background = np.ones([self.width, self.height])
+        else:
+            self.quantized_background = None
+        self.background = self.create_environment(self.quantize_background)
         self.sensed_gradient = 0
         self.metrics = ["cluster_number,cluster_metric"]
+        self.filepath = f"../data"
+        self.robotPosFile = f"%5d_robotPos.txt" % (random.randint(0, 9999))
+        self.make_logFiles()
+        self.tick = 0
+
 
 
     def step(self):
@@ -70,18 +84,26 @@ class Environment:
                     self.neighbors_table[id1].append(self.population[id2])
                     self.neighbors_table[id2].append(self.population[id1])
 
-        # print(self.neighbors_table)
-        # 2. Move
+        # with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
+        #     file.write(f"{self.tick}\t")
         for robot in self.population:
+            # r_pos = np.around(robot.pos, decimals=3)
+            # with open(f"{self.filepath}/robot_positions/{self.robotPosFile}", "a") as file:
+            #     file.write(f"{r_pos[0]}\t"
+            #                f"{r_pos[1]}\t")
+
             robot.step()
 
-        # 3. Compute metrics
+        self.tick += 1
+        # # 3. Compute metrics
+
         # total_distance = 0
         # for robot1 in self.population:
         #     for robot2 in self.population:
         #         if robot1 != robot2:
         #             total_distance += distance_between(robot1, robot2)
         # total_distance = -total_distance
+
         # print("Total distance = %s" % total_distance)
 
         clusters = self.get_neighbors_graph().clusters()
@@ -100,6 +122,7 @@ class Environment:
 
         self.metrics.append(str(cluster_count) + "," + str(cluster_metric))
 
+
     def create_robots(self):
         for robot_id in range(self.nb_soc_robots):
             robot = Agent(robot_id=robot_id,
@@ -107,6 +130,7 @@ class Environment:
                           y=random.randint(self.robot_radius, self.height - 1 - self.robot_radius),
                           speed=self.robot_speed,
                           radius=self.robot_radius,
+                          instant_sensing=self.instant_sensing,
                           bool_noise=self.bool_noise,
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
@@ -121,6 +145,7 @@ class Environment:
                           y=random.randint(self.robot_radius, self.height - 1 - self.robot_radius),
                           speed=self.robot_speed,
                           radius=self.robot_radius,
+                          instant_sensing=self.instant_sensing,
                           bool_noise=self.bool_noise,
                           noise_mu=self.noise_mu,
                           noise_musd=self.noise_musd,
@@ -131,15 +156,22 @@ class Environment:
             self.population.append(robot)
 
 
-    def quantize_val(self, val):
+    def make_logFiles(self):
+        os.makedirs(self.filepath, exist_ok=True)
+
+
+    @staticmethod
+    def pixel_filter(val):
         if val < 0:
             val = 0
         if val > 255:
             val = 255
-        index = bisect(self.perceptible_thresholds[:-1], val / 255)
-        new_val = 255 * self.perceptible_gradient[index - 1]
+        return val
 
-        return new_val
+    def quantize_pixel(self, val):
+        index = bisect(self.perceptible_thresholds[:-1], val / 255)
+        quantized_val = 255 * self.perceptible_gradient[index - 1]
+        return quantized_val
 
     @staticmethod
     def quadratic_diffusion(k_val, distance):
@@ -153,18 +185,20 @@ class Environment:
         return int(255 * distance + 0 * (1 - distance / max_distance))
 
 
-    def create_environment(self):
+    def create_environment(self, q_background):
         # Random center position
-        # rand_x = random.randint(0, self.width)
-        # rand_y = random.randint(0, self.height)
-        # self.center_gradient = np.array([rand_x, rand_y])
-        self.center_gradient = np.array([self.width//2, self.width//2])
+        if not self.fixed_position:
+            rand_x = random.randint(0, self.width)
+            rand_y = random.randint(0, self.height)
+            self.center_gradient = np.array([rand_x, rand_y])
+        else:
+            self.center_gradient = np.array([self.width // 2, self.width // 2])
 
         background = 255 * np.ones([self.width, self.height])
 
         if self.fixed_extension:
-            max_distance = self.width / 3 * 2
-            k_val = np.round(1 / (self.width / 2.5), 6)
+            max_distance = self.width // 2
+            k_val = np.round(1 / (self.width // 4), 6)
         else:
             max_distance = random.randint(self.width // 3, self.width)
             k_val = np.round(np.random.uniform(1 / (self.width/4), 1 / (self.width/2)), 6)
@@ -185,11 +219,25 @@ class Environment:
                     print('Wrong diffusion type!!!')
                     exit(-1)
 
-                gray = self.quantize_val(gray)
+                gray = self.pixel_filter(gray)
+                if self.quantize_background:
+                    quantized_gray = self.quantize_pixel(gray)
+                    self.quantized_background[x, y] = quantized_gray
+                    self.quantized_background[x + 1, y] = quantized_gray
+                    self.quantized_background[x, y + 1] = quantized_gray
+                    self.quantized_background[x + 1, y + 1] = quantized_gray
+
                 background[x, y] = gray
                 background[x+1, y] = gray
                 background[x, y+1] = gray
                 background[x+1, y+1] = gray
+
+        # print('background.shape: ', background.shape)
+        # print('background.shape: ', background.size)
+        # print('pixels val sum / num of pixels / 255: ', np.sum(background)/background.size/255)
+        # linear ---> .7366902396514161
+        # quadratic 3 ---> .7684166448801742
+
 
         return background
 
@@ -230,6 +278,7 @@ class Environment:
         return gradient_t
 
     def update_overall_gradient(self, gradient_t):
+        # print(gradient_t)
         self.sensed_gradient += gradient_t
 
     def check_border_collision(self, robot, new_x, new_y):
@@ -280,5 +329,8 @@ class Environment:
 
     def draw_background(self, canvas):
         from PIL import ImageTk, Image
-        self.img = ImageTk.PhotoImage(Image.fromarray(np.uint8(self.background)))
+        if self.quantized_background is None:
+            self.img = ImageTk.PhotoImage(Image.fromarray(np.uint8(self.background)))
+        else:
+            self.img = ImageTk.PhotoImage(Image.fromarray(np.uint8(self.quantized_background)))
         canvas.create_image(0, 0, image=self.img, anchor='nw')

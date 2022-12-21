@@ -11,7 +11,6 @@ class ViewController:
         self.fps_update_counter = 0
 
         self.root = tk.Tk()
-        # TODO: load the environment also without the view_controller
         # self.controller.environment.load_images()
         self.root.title("Gradient Sensing")
 
@@ -64,6 +63,7 @@ class ViewController:
                 self.fps = self.fps_update_counter
                 self.fps_update_counter = 0
                 self.last_fps_check_time = time.time()
+
 
             self.root.update()
 
