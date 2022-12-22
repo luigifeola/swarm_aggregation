@@ -9,7 +9,7 @@
 ## then the configuration is discarded.
 ##
 ## Examples of valid logical operators are: ==  !=  >=  <=  >  <  &  |  !  %in%
-t0 >= t1
+t0 < t1
 r0g == 1
 r1g == 1
 r2g == 1
